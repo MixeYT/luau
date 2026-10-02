@@ -12,7 +12,7 @@ from mathutils import Matrix, Vector
 # Glowing parts are split into their own mesh named <Sword><Material>, meant to become Neon in Roblox.
 # The black inverted hull outline is a separate object named <Sword>Outline, parented to the sword.
 
-WORLD = "Starter"  # which pack to build, see WORLDS: "Starter" or "Desert"
+WORLD = "Starter"  # which pack to build, see WORLDS: "Starter", "Desert" or "Halloween"
 
 TEXTURE_SIZE = 1024
 BAKE_SAMPLES = 64
@@ -132,12 +132,51 @@ PALETTE = {
 	"DjinnGlow": ("4FE3FF", "0E7A9E", "E0FFFF"),
 	"DjinnSmoke": ("C9A8FF", "6A3AC0", "F4ECFF"),
 	"DjinnLeather": ("3A2A6E", "120A2E", "7A6AB0"),
+	"CandyCorn": ("FFB02E", "A8501E", "FFF4D0"),
+	"Wrapper": ("A84AE0", "4A1A7A", "E0B0FF"),
+	"CandyStick": ("FFF6E6", "B8A890", "FFFFFF"),
+	"CandyWhite": ("FFF6E6", "B8A890", "FFFFFF"),
+	"Lollipop": ("FF4FA0", "8A1A50", "FFB8DA"),
+	"Straw": ("E8C25A", "8A6A1E", "FFF0A0"),
+	"Burlap": ("B08A5A", "5A4028", "E0C090"),
+	"GraveStone": ("8A8E9A", "3A3C48", "C8CCD8"),
+	"IronBlack": ("3A3A44", "121218", "7A7A8A"),
+	"Pumpkin": ("FF8A1F", "A8380E", "FFC06A"),
+	"PumpkinGlow": ("FFD23A", "C07A0E", "FFF6C0"),
+	"Vine": ("4E9A35", "1E4A1A", "9ADA6A"),
+	"Leaf": ("6AB84A", "2A5A1E", "B0E880"),
+	"BatWing": ("4A2E6A", "1A0E2A", "9A7AC0"),
+	"BatBody": ("2E2238", "0E0812", "6A5A80"),
+	"BatEye": ("FF3A3A", "8A0E0E", "FFB0B0"),
+	"SpiderBlade": ("2A2630", "0E0C12", "6A6478"),
+	"SpiderBody": ("1E1A24", "08060A", "5A5068"),
+	"Hourglass": ("E8202E", "6A0810", "FF8A8A"),
+	"Web": ("ECECF6", "8A8AA0", "FFFFFF"),
+	"Potion": ("6AE05A", "1E7A2E", "D0FFB0"),
+	"PotionGlow": ("9CFF5A", "3A9A1E", "E8FFD0"),
+	"Cauldron": ("2E2A36", "0E0C12", "6A6478"),
+	"WitchPurple": ("6A3AB0", "2A1258", "B08AF0"),
+	"ReaperSteel": ("5A6070", "1E2028", "B0B8C8"),
+	"ReaperGlow": ("B06AFF", "5A1AB0", "E8D0FF"),
+	"ReaperWood": ("3A2E28", "140E0C", "7A6050"),
+	"Cloth": ("3A3248", "14101C", "7A6A90"),
+	"Ghost": ("E8F4FF", "7A9AC0", "FFFFFF"),
+	"GhostGlow": ("8AF0FF", "1E8AB0", "E8FFFF"),
+	"Chain": ("6A6E7A", "22242C", "B0B4C0"),
+	"Vampire": ("B01E2E", "4A0812", "FF7A7A"),
+	"BloodGlow": ("FF2E3A", "8A0612", "FFB0B0"),
+	"Rose": ("D81E3A", "5A0814", "FF7A8A"),
+	"Horseman": ("2A2230", "0C080E", "6A5A78"),
+	"HellFire": ("FF8A2E", "C0380E", "FFE8A0"),
+	"NightmareBlade": ("2A1A40", "0A0614", "8A6AD0"),
+	"SoulGlow": ("7CFF9A", "1E9A4A", "E0FFE8"),
 }
 
 # Materials split into their own mesh so they can be set to Neon in Roblox.
 GLOW_MATERIALS = {
 	"FireGem", "Flame", "DemonGlow", "DemonEye", "StarGlow", "HaloGlow", "VoidGlow", "VoidCyan",
 	"Venom", "CurseGlow", "SandGlow", "SunGlow", "DjinnGlow", "DjinnSmoke",
+	"PumpkinGlow", "BatEye", "PotionGlow", "ReaperGlow", "GhostGlow", "BloodGlow", "HellFire", "SoulGlow",
 }
 
 
@@ -403,7 +442,8 @@ def add_plate(bm, outline, plateau=None, edge_thickness=BLADE_EDGE_THICKNESS, ce
 	bmesh.ops.transform(bm, matrix=matrix, verts=new_verts)
 
 
-def add_lathe(bm, profile, sides, matrix=Matrix()):
+def add_lathe(bm, profile, sides, matrix=Matrix(), closed=False):
+	# Revolves (radius, height) points around Z. A closed profile becomes a ring without caps.
 	rings = []
 	for radius, height in profile:
 		if radius == 0:
@@ -416,7 +456,10 @@ def add_lathe(bm, profile, sides, matrix=Matrix()):
 			ring.append(bm.verts.new(matrix @ Vector((math.cos(angle) * radius, math.sin(angle) * radius, height))))
 		rings.append(ring)
 
-	for lower, upper in zip(rings, rings[1:]):
+	pairs = list(zip(rings, rings[1:]))
+	if closed:
+		pairs.append((rings[-1], rings[0]))
+	for lower, upper in pairs:
 		for i in range(sides):
 			if len(lower) == 1:
 				bm.faces.new((lower[0], upper[i], upper[i - 1]))
@@ -425,9 +468,10 @@ def add_lathe(bm, profile, sides, matrix=Matrix()):
 			else:
 				bm.faces.new((lower[i - 1], lower[i], upper[i], upper[i - 1]))
 
-	for ring in (rings[0], rings[-1]):
-		if len(ring) > 1:
-			bm.faces.new(ring)
+	if not closed:
+		for ring in (rings[0], rings[-1]):
+			if len(ring) > 1:
+				bm.faces.new(ring)
 
 
 def add_torus(bm, radius, thickness, segments, sides, matrix=Matrix()):
@@ -2047,9 +2091,859 @@ DESERT_SWORDS = [
 	("DjinnKingScimitar", "Exclusive", build_djinn_king_scimitar),
 ]
 
+#// Halloween Event
+
+def new_verts_since(bm, before):
+	return [vert for vert in bm.verts if vert not in before]
+
+
+def add_pumpkin(bm, center, radius, height=0.78, ribs=8, sides=16, rings=8):
+	before = set(bm.verts)
+	profile = [(radius * math.sin(math.pi * i / rings), -radius * height * math.cos(math.pi * i / rings)) for i in range(rings + 1)]
+	profile[0] = (0, profile[0][1] + radius * 0.12)
+	profile[-1] = (0, profile[-1][1] - radius * 0.12)
+	add_lathe(bm, profile, sides)
+	for vert in new_verts_since(bm, before):
+		angle = math.atan2(vert.co.y, vert.co.x)
+		bulge = 1 + 0.08 * math.cos(ribs * angle)
+		vert.co.x *= bulge
+		vert.co.y *= bulge
+		vert.co += Vector(center)
+
+
+def add_pumpkin_face(bm, center, radius, size=1.0, depth_offset=0.0):
+	# Carved triangle eyes, nose and a jagged grin on both sides of a pumpkin.
+	cx, cz = center[0], center[2]
+	eye = [Vector((-0.11, -0.06)), Vector((0.11, -0.06)), Vector((0.0, 0.1))]
+	nose = [Vector((-0.05, -0.04)), Vector((0.05, -0.04)), Vector((0.0, 0.05))]
+	mouth = [
+		Vector((-0.28, 0.04)), Vector((-0.18, -0.02)), Vector((-0.12, 0.04)), Vector((-0.04, -0.03)), Vector((0.04, 0.04)),
+		Vector((0.12, -0.03)), Vector((0.18, 0.04)), Vector((0.28, 0.04)), Vector((0.18, -0.12)), Vector((0.0, -0.17)), Vector((-0.18, -0.12)),
+	]
+	for side in (-1, 1):
+		y = side * (radius * 0.9 + depth_offset)
+		for shape, offset in ((eye, (-0.16, 0.12)), (eye, (0.16, 0.12)), (nose, (0, -0.02)), (mouth, (0, -0.12))):
+			points = [Vector((cx + (point.x + offset[0]) * size * radius / 0.36, cz + (point.y + offset[1]) * size * radius / 0.36)) for point in shape]
+			add_plate(bm, points, None, 0.02, matrix=Matrix.Translation((0, y, 0)))
+
+
+def bat_wing_outline(scale=1.0):
+	elbow = Vector((0.85, 0.55))
+	top = [(0, 0.08), (0.4, 0.38), (0.85, 0.55), (1.35, 0.62), (1.6, 0.45)]
+	fingers = [Vector(point) for point in ((1.6, 0.45), (1.3, -0.1), (0.85, -0.38), (0.4, -0.3), (0, -0.1))]
+	outline = catmull_rom(top, 4)
+	for start, end in zip(fingers, fingers[1:]):
+		control = ((start + end) / 2).lerp(elbow, 0.45)
+		for step in range(5):
+			t = step / 5
+			outline.append((1 - t) ** 2 * start + 2 * (1 - t) * t * control + t ** 2 * end)
+	outline = [point * scale for point in simplify(outline)]
+	bones = [[Vector(point) * scale for point in top]] + [[elbow * scale, elbow.lerp(finger, 0.5) * scale, finger * scale] for finger in fingers[1:4]]
+	return outline, bones
+
+
+def ghost_outline(radius, height, waves=3):
+	top = [Vector((math.cos(angle), math.sin(angle))) * radius for angle in numpy.linspace(0, math.pi, 9)]
+	bottom = []
+	for i in range(waves * 2 + 1):
+		x = -radius + 2 * radius * i / (waves * 2)
+		bottom.append(Vector((x, -height + (0.12 * radius if i % 2 else 0))))
+	return simplify([Vector((radius, 0))] + top[1:-1] + [Vector((-radius, 0))] + bottom)
+
+
+def web_strokes(center, radius, spokes=7, rings=3, start=0.0, sweep=math.tau):
+	center = Vector(center)
+	directions = [Vector((math.cos(start + sweep * i / spokes), math.sin(start + sweep * i / spokes))) for i in range(spokes + (0 if sweep >= math.tau else 1))]
+	strokes = [[center, center + direction * radius] for direction in directions]
+	for ring in range(1, rings + 1):
+		distance = radius * ring / (rings + 0.4)
+		loop = []
+		for index, direction in enumerate(directions):
+			loop.append(center + direction * distance)
+			following = directions[(index + 1) % len(directions)]
+			if index < len(directions) - 1 or sweep >= math.tau:
+				loop.append(center + (direction + following).normalized() * distance * 0.86)
+		if sweep >= math.tau:
+			loop.append(loop[0])
+		strokes.append(loop)
+	return strokes
+
+
+def add_flame(bm, root, direction, length, width, side=1, matrix=Matrix()):
+	direction = Vector(direction).normalized()
+	bend = Vector((-direction.y, direction.x)) * side * length * 0.2
+	spine = [Vector(root), Vector(root) + direction * length * 0.5 + bend, Vector(root) + direction * length]
+	flame, flame_plateau = profile_shape(spine, [(0, width * 0.35), (0.3, width), (0.55, width * 0.65), (0.72, width * 0.78), (1, 0)], chamfer=width * 0.4)
+	add_plate(bm, flame, flame_plateau, 0.008, 0.03, matrix)
+
+
+#// Halloween 01 Candy Corn Sword (Common)
+
+def build_candy_corn_sword(part):
+	blade_base = 0.14
+	length = 2.15
+	outline, plateau = profile_shape(
+		[(0, blade_base), (0, blade_base + length)],
+		[(0, 0.27), (0.06, 0.3), (0.5, 0.22), (0.85, 0.13), (1, 0.09)],
+		tip="round",
+		chamfer=0.1,
+		plateau_ratio=0.4,
+	)
+	bm = bmesh.new()
+	add_plate(bm, outline, plateau, 0.06, 0.12)
+	part(bm, "CandyCorn")
+
+	bm = bmesh.new()
+	for side in (-1, 1):
+		add_sweep(bm, [(side * 0.1, 0.08), (side * 0.22, 0.08)], [0.05, 0.035])
+		for angle in (-38, 0, 38):
+			direction = Vector((side * math.cos(math.radians(angle)), 0, math.sin(math.radians(angle))))
+			add_spike(bm, (side * 0.26, 0, 0.08), direction, 0.32, 0.08, sides=6)
+	add_ball(bm, (0, 0, 0.08), 0.13, (1.3, 1.0, 0.9))
+	part(bm, "Wrapper")
+
+	bm = bmesh.new()
+	add_grip(bm, -0.04, 0.72, 0.058, 0.07, 6)
+	bottom = -0.04 - 0.72
+	add_lathe(bm, [(0.03, bottom + 0.02), (0.03, bottom - 0.12)], 8)
+	part(bm, "CandyStick")
+
+	lolly_center = Vector((0, 0, bottom - 0.3))
+	bm = bmesh.new()
+	add_lathe(bm, [(0, -0.07), (0.17, -0.06), (0.2, 0.0), (0.17, 0.06), (0, 0.07)], 16, oriented(lolly_center, (0, 1, 0)))
+	part(bm, "Lollipop")
+
+	bm = bmesh.new()
+	for radius in (0.06, 0.14):
+		for y in (-0.06, 0.06):
+			add_torus(bm, radius, 0.022, 18, 5, Matrix.Translation(lolly_center + Vector((0, y, 0))))
+	part(bm, "CandyWhite")
+
+	return {
+		"blade": "CandyCorn",
+		"effects": {
+			"CandyCorn": {
+				"gradient": (blade_base, blade_base + length + 0.1, [
+					(0, "FFC21F"), (0.36, "FFC21F"), (0.385, "FF7A1F"), (0.69, "FF7A1F"), (0.715, "FFF6E6"), (1, "FFF6E6"),
+				]),
+				"patterns": [("stars", "FFFFFF", 12, 0.45)],
+			},
+			"CandyStick": {"patterns": [("bands", "FF4FA0", 9, 1)]},
+		},
+	}
+
+
+#// Halloween 02 Scarecrow Sickle (Common)
+
+def build_scarecrow_sickle(part):
+	spine = [(0, 0.3), (0.02, 0.9), (0.25, 1.6), (0.75, 1.95), (1.2, 1.85), (1.42, 1.6)]
+	stations = [(0, 0.07, 0.07), (0.2, 0.12, 0.07), (0.45, 0.38, 0.07), (0.68, 0.46, 0.06), (0.86, 0.3, 0.05), (1, 0, 0)]
+	serration = [(t, 1, 0.05, -0.035, 0.6) for t in (0.4, 0.47, 0.54, 0.61, 0.68, 0.75, 0.82)]
+	outline, plateau = profile_shape(spine, stations, chamfer=0.09, features=serration)
+	bm = bmesh.new()
+	add_plate(bm, outline, plateau, 0.02, 0.075)
+	part(bm, "Rust")
+
+	bm = bmesh.new()
+	for index in range(14):
+		angle = math.tau * index / 14
+		direction = Vector((math.cos(angle) * 0.7, math.sin(angle) * 0.7, 1.0 if index % 2 else 0.6))
+		add_spike(bm, (math.cos(angle) * 0.06, math.sin(angle) * 0.06, 0.12), direction, 0.26 if index % 3 else 0.2, 0.03, sides=4)
+	bottom = -0.02 - 0.85
+	for index in range(10):
+		angle = math.tau * index / 10
+		direction = Vector((math.cos(angle) * 0.6, math.sin(angle) * 0.6, -1))
+		add_spike(bm, (math.cos(angle) * 0.08, math.sin(angle) * 0.08, bottom - 0.28), direction, 0.18, 0.025, sides=4)
+	part(bm, "Straw")
+
+	bm = bmesh.new()
+	for height in (0.1, 0.2):
+		add_torus(bm, 0.085, 0.025, 12, 5, Matrix.Translation((0, 0, height)) @ Matrix.Rotation(math.radians(90), 4, "X"))
+	part(bm, "Rope")
+
+	bm = bmesh.new()
+	add_grip(bm, 0.3, 1.17, 0.06, 0.068, 9)
+	part(bm, "Wood")
+
+	head = Vector((0, 0, bottom - 0.2))
+	bm = bmesh.new()
+	add_ball(bm, head, 0.2, (1, 0.95, 1.05))
+	add_box(bm, (0.12, 0.12, 0.08), (0, 0, bottom - 0.02), 0.03)
+	part(bm, "Burlap")
+
+	bm = bmesh.new()
+	for side in (-1, 1):
+		add_cabochon(bm, head + Vector((side * 0.075, -0.175, 0.05)), 0.04, 0.03, direction=(0, -1, 0))
+	smile = [head + Vector((x, -0.19 + abs(x) * 0.3, -0.06 + x * x * 2.2)) for x in (-0.1, -0.05, 0, 0.05, 0.1)]
+	add_sweep(bm, smile, [0.01] * 5, sides=4, smoothness=2)
+	for x in (-0.075, -0.025, 0.025, 0.075):
+		add_sweep(bm, [head + Vector((x, -0.19 + abs(x) * 0.3, -0.09 + x * x * 2.2)), head + Vector((x, -0.19 + abs(x) * 0.3, -0.03 + x * x * 2.2))], [0.007, 0.007], sides=4)
+	part(bm, "Socket")
+
+	return {
+		"blade": "Rust",
+		"decals": [[(0.5, 1.82), (0.56, 1.76), (0.53, 1.7)], [(0.15, 1.3), (0.2, 1.26), (0.18, 1.2)]],
+		"effects": {
+			"Rust": {"gradient": (0.3, 2.0, [(0, "7A3A1E"), (1, "C07A4A")]), "patterns": [("cells", "5A2A14", 4, 0.35)]},
+			"Burlap": {"patterns": [("bands", "8A6A3E", 22, 0.35)]},
+		},
+	}
+
+
+#// Halloween 03 Tombstone Sword (Uncommon)
+
+LETTER_R = [[(-1, -1), (-1, 1), (0.5, 1), (0.9, 0.55), (0.5, 0.05), (-1, 0.05)], [(0.0, 0.05), (0.9, -1)]]
+LETTER_I = [[(0, 1), (0, -1)]]
+LETTER_P = [[(-1, -1), (-1, 1), (0.5, 1), (0.9, 0.55), (0.5, 0.05), (-1, 0.05)]]
+
+
+def build_tombstone_sword(part):
+	blade_base = 0.28
+	length = 1.95
+	top = blade_base + length
+	outline, plateau = profile_shape(
+		[(0, blade_base), (0, top)],
+		[(0, 0.27), (0.05, 0.3), (1, 0.3)],
+		tip="round",
+		chamfer=0.08,
+		features=[(0.35, 1, 0.1, 0.06, 0.3), (0.7, -1, 0.12, 0.07, -0.2), (0.88, 1, 0.08, 0.05, 0)],
+	)
+	bm = bmesh.new()
+	add_plate(bm, outline, plateau, 0.05, 0.13)
+	part(bm, "GraveStone")
+
+	bm = bmesh.new()
+	for height in (0.06, 0.24):
+		add_box(bm, (1.0, 0.07, 0.06), (0, 0, height), 0.015)
+	for x in (-0.44, -0.22, 0.22, 0.44):
+		add_box(bm, (0.05, 0.05, 0.36), (x, 0, 0.17), 0.012)
+		add_spike(bm, (x, 0, 0.35), (0, 0, 1), 0.16, 0.045, sides=4)
+		for side in (-1, 1):
+			add_sweep(bm, [(x, 0.31), (x + side * 0.06, 0.36), (x + side * 0.05, 0.42)], [0.014, 0.012, 0.0], sides=4)
+	bottom = -0.03 - 0.72
+	add_box(bm, (0.2, 0.2, 0.04), (0, 0, bottom - 0.02), 0.01)
+	add_box(bm, (0.2, 0.2, 0.04), (0, 0, bottom - 0.26), 0.01)
+	for x in (-0.085, 0.085):
+		for y in (-0.085, 0.085):
+			add_box(bm, (0.025, 0.025, 0.24), (x, y, bottom - 0.14), 0.006)
+	add_lathe(bm, [(0.14, bottom - 0.28), (0, bottom - 0.4)], 4, Matrix.Rotation(math.radians(45), 4, "Z"))
+	part(bm, "IronBlack")
+
+	bm = bmesh.new()
+	add_lathe(bm, [(0, bottom - 0.2), (0.05, bottom - 0.17), (0.05, bottom - 0.09), (0, bottom - 0.06)], 6)
+	part(bm, "PumpkinGlow", CRYSTAL_SMOOTH_ANGLE)
+
+	bm = bmesh.new()
+	add_grip(bm, -0.03, 0.72, 0.064, 0.077, 7)
+	part(bm, "DarkLeather")
+
+	letters = glyph_strokes([LETTER_R, LETTER_I, LETTER_P], [(-0.16, top - 0.25), (0, top - 0.25), (0.15, top - 0.25)], 0.055)
+	cross = [[(0, top - 0.95), (0, top - 0.5)], [(-0.12, top - 0.62), (0.12, top - 0.62)]]
+	cracks = [[(0.14, blade_base + 0.55), (0.08, blade_base + 0.5), (0.12, blade_base + 0.42), (0.05, blade_base + 0.35)], [(-0.15, top - 1.15), (-0.08, top - 1.2), (-0.12, top - 1.3)]]
+	return {
+		"blade": "GraveStone",
+		"decals": letters + cross + cracks,
+		"decal_width": 0.018,
+		"decal_colors": ("33353F", "E2E6F0"),
+		"effects": {
+			"GraveStone": {
+				"gradient": (0.2, 2.5, [(0, "6E727E"), (1, "A8ACB8")]),
+				"patterns": [("nebula", "5E9A45", 2.5, 0.6), ("cells", "4A4C58", 3, 0.25)],
+			},
+		},
+	}
+
+
+#// Halloween 04 Pumpkin Sword (Uncommon)
+
+def build_pumpkin_sword(part):
+	blade_base = 0.3
+	length = 2.55
+	outline, plateau = profile_shape(
+		[(0, blade_base), (0, blade_base + length)],
+		[(0, 0.2), (0.08, 0.26), (0.7, 0.25), (0.9, 0.17), (1, 0)],
+		chamfer=0.1,
+	)
+	bm = bmesh.new()
+	add_plate(bm, outline, plateau)
+	pumpkin_center = (0, 0, 0.14)
+	add_pumpkin(bm, pumpkin_center, 0.27)
+	bottom = -0.1 - 0.72
+	add_pumpkin(bm, (0, 0, bottom - 0.1), 0.12, ribs=6, sides=12, rings=6)
+	part(bm, "Pumpkin")
+
+	bm = bmesh.new()
+	add_pumpkin_face(bm, pumpkin_center, 0.27)
+	part(bm, "PumpkinGlow")
+
+	path = []
+	for step in range(16):
+		t = step / 15
+		angle = t * math.tau * 1.75
+		path.append((math.cos(angle) * 0.27, math.sin(angle) * 0.13, blade_base + 0.1 + t * 1.9))
+	bm = bmesh.new()
+	add_sweep(bm, path, [0.022] * 12 + [0.018, 0.014, 0.01, 0.0], sides=5, smoothness=3)
+	add_sweep(bm, [(0, 0, 0.32), (0.04, 0, 0.42), (0.1, 0, 0.44)], [0.04, 0.035, 0.03])
+	tendril = [(path[-1][0] + 0.05 * math.cos(a) * (1 - a / 9), 0, path[-1][2] + 0.05 * math.sin(a) * (1 - a / 9)) for a in numpy.linspace(0, 9, 10)]
+	add_sweep(bm, tendril, [0.012] * 9 + [0.0], sides=4, smoothness=2)
+	add_sweep(bm, [(0, 0, bottom), (0.03, 0, bottom + 0.06)], [0.025, 0.02])
+	part(bm, "Vine")
+
+	bm = bmesh.new()
+	for index in (3, 7, 11):
+		x, y, z = path[index]
+		leaf, leaf_plateau = profile_shape([(0, 0), (0.08, 0.1), (0.1, 0.22)], [(0, 0.03), (0.4, 0.08), (1, 0)], chamfer=0.03)
+		side = 1 if x > 0 else -1
+		add_plate(bm, leaf, leaf_plateau, 0.006, 0.02, Matrix.Translation((x, y - 0.03 * side, z)) @ Matrix.Rotation(math.radians(-side * 50), 4, "Y"))
+	part(bm, "Leaf")
+
+	bm = bmesh.new()
+	add_grip(bm, -0.1, 0.72, 0.064, 0.077, 7)
+	part(bm, "DarkLeather")
+
+	ribs = [[(x, blade_base + 0.25), (x * 1.08, blade_base + 1.2), (x, blade_base + 2.2)] for x in (-0.13, 0, 0.13)]
+	return {
+		"blade": "Pumpkin",
+		"decals": ribs,
+		"decal_width": 0.014,
+		"decal_colors": ("B8480E", "FFC07A"),
+		"effects": {"Pumpkin": {"gradient": (-1.0, 2.9, [(0, "E06A14"), (1, "FFA43A")])}},
+	}
+
+
+#// Halloween 05 Bat Wing Sword (Rare)
+
+def build_bat_wing_sword(part):
+	left = [Vector((-0.09, 0.25)), Vector((-0.1, 1.0)), Vector((-0.07, 2.0)), Vector((0.0, 3.0))]
+	fingers = [Vector((0.0, 3.0)), Vector((0.36, 2.3)), Vector((0.44, 1.6)), Vector((0.38, 0.9)), Vector((0.16, 0.25))]
+	outline = list(left)
+	for start, end in zip(fingers, fingers[1:]):
+		control = ((start + end) / 2).lerp(Vector((0.0, (start.y + end.y) / 2)), 0.45)
+		for step in range(1, 6):
+			t = step / 6
+			outline.append((1 - t) ** 2 * start + 2 * (1 - t) * t * control + t ** 2 * end)
+		outline.append(end)
+	outline = simplify(outline)
+	bm = bmesh.new()
+	add_plate(bm, outline, None, 0.035)
+	part(bm, "BatWing")
+
+	bm = bmesh.new()
+	add_sweep(bm, [(point.x, point.y) for point in left], [0.05, 0.045, 0.035, 0.0], sides=6)
+	for finger in fingers[1:4]:
+		root = Vector((-0.08, finger.y - 0.35))
+		add_sweep(bm, [root, root.lerp(finger, 0.5), finger], [0.032, 0.025, 0.012], sides=5)
+		add_spike(bm, (finger.x, 0, finger.y), (1, 0, 0.3), 0.09, 0.02, sides=4)
+	add_ball(bm, (0, 0.04, 0.14), 0.16, (1.1, 0.85, 1.15))
+	add_ball(bm, (0, -0.06, 0.3), 0.11, (1.1, 0.95, 0.95))
+	for side in (-1, 1):
+		add_spike(bm, (side * 0.07, -0.05, 0.37), (side * 0.4, 0, 1), 0.16, 0.05, sides=4)
+		wing, bones = bat_wing_outline(0.32)
+		wing_matrix = Matrix.Translation((side * 0.12, 0.02, 0.06)) @ Matrix.Diagonal((side, 1, 1, 1))
+		add_plate(bm, wing, None, 0.02, matrix=wing_matrix)
+		for bone in bones:
+			add_sweep(bm, [(point.x, point.y) for point in bone], [0.018] * (len(bone) - 1) + [0.006], sides=4, matrix=wing_matrix)
+	bottom = -0.04 - 0.75
+	add_grip(bm, -0.04, 0.75, 0.064, 0.077, 7)
+	add_pommel(bm, [(0.05, bottom + 0.01), (0.1, bottom - 0.03), (0.1, bottom - 0.08), (0.06, bottom - 0.11)])
+	add_spike(bm, (0, 0, bottom - 0.1), (0, 0, -1), 0.2, 0.06)
+	part(bm, "BatBody")
+
+	bm = bmesh.new()
+	for side in (-1, 1):
+		add_ball(bm, (side * 0.045, -0.155, 0.32), 0.026, (1, 0.6, 1))
+	part(bm, "BatEye")
+
+	bm = bmesh.new()
+	for side in (-1, 1):
+		add_spike(bm, (side * 0.025, -0.15, 0.25), (0, -0.1, -1), 0.06, 0.012, sides=4)
+	part(bm, "Tooth")
+
+	return {
+		"blade": "BatWing",
+		"effects": {
+			"BatWing": {"gradient": (0.2, 3.0, [(0, "2A1A40"), (1, "7A52B0")]), "patterns": [("cells", "9A72D0", 2.2, 0.3)]},
+			"BatBody": {"gradient": (-0.9, 0.5, [(0, "1A1222"), (1, "3E2E50")])},
+		},
+	}
+
+
+#// Halloween 06 Spider Sword (Rare)
+
+def build_spider_sword(part):
+	blade_base = 0.22
+	length = 2.8
+	top = blade_base + length
+	outline, plateau = profile_shape(
+		[(0, blade_base), (0, top)],
+		[(0, 0.2), (0.1, 0.25), (0.6, 0.23), (0.85, 0.17), (1, 0)],
+		chamfer=0.1,
+		features=[(t, side, 0.12, -0.08, 0.7) for t, side in ((0.45, 1), (0.55, -1), (0.7, 1), (0.78, -1))],
+	)
+	bm = bmesh.new()
+	add_plate(bm, outline, plateau)
+	part(bm, "SpiderBlade")
+
+	body = Vector((0, -0.12, 0.12))
+	bm = bmesh.new()
+	add_ball(bm, body + Vector((0, 0.04, -0.05)), 0.17, (1, 0.85, 1.15))
+	add_ball(bm, body + Vector((0, -0.04, 0.17)), 0.1, (1, 0.9, 0.9))
+	for side in (-1, 1):
+		for index in range(4):
+			lift = 0.14 - index * 0.08
+			knee = body + Vector((side * 0.34, -0.02, lift + 0.18))
+			foot = body + Vector((side * (0.56 - index * 0.03), 0.02, lift - 0.08))
+			add_sweep(bm, [body + Vector((side * 0.08, 0, lift)), knee, foot], [0.022, 0.018, 0.0], sides=5)
+	add_grip(bm, -0.03, 0.75, 0.064, 0.077, 7)
+	part(bm, "SpiderBody")
+
+	bm = bmesh.new()
+	hourglass = [Vector((-0.06, 0.07)), Vector((0.06, 0.07)), Vector((0.0, 0.0)), Vector((0.06, -0.07)), Vector((-0.06, -0.07)), Vector((0.0, 0.0))]
+	upper = [Vector((-0.06, 0.07)), Vector((0.06, 0.07)), Vector((0.0, 0.005))]
+	lower = [Vector((0.0, -0.005)), Vector((0.06, -0.07)), Vector((-0.06, -0.07))]
+	for shape in (upper, lower):
+		add_plate(bm, shape, None, 0.012, matrix=Matrix.Translation(body + Vector((0, -0.14, -0.06))))
+	for side in (-1, 1):
+		for offset in (0.02, 0.05):
+			add_ball(bm, body + Vector((side * offset, -0.13, 0.22 - offset * 0.4)), 0.016)
+	part(bm, "Hourglass")
+
+	bottom = -0.03 - 0.75
+	bm = bmesh.new()
+	add_ball(bm, (0, 0, bottom - 0.15), 0.15, (0.9, 0.9, 1.15))
+	for index in range(5):
+		angle = math.tau * index / 5
+		add_sweep(bm, [(math.cos(angle) * 0.13, math.sin(angle) * 0.13, bottom - 0.3), (math.cos(angle) * 0.15, math.sin(angle) * 0.15, bottom - 0.15), (math.cos(angle + 0.8) * 0.13, math.sin(angle + 0.8) * 0.13, bottom - 0.02)], [0.008, 0.008, 0.008], sides=4)
+	part(bm, "Web")
+
+	webs = web_strokes((0, top - 0.75), 0.24, spokes=8, rings=3) + web_strokes((-0.05, blade_base + 0.9), 0.2, spokes=6, rings=2, start=0.2)
+	return {
+		"blade": "SpiderBlade",
+		"outline": outline,
+		"edge_glow": ("C0182A", 0.05),
+		"decals": webs,
+		"decal_width": 0.008,
+		"decal_colors": ("ECECF6", "FFFFFF"),
+		"effects": {"SpiderBlade": {"gradient": (0.2, 3.0, [(0, "141218"), (1, "3A3448")])}},
+	}
+
+
+#// Halloween 07 Witch Cauldron Blade (Epic)
+
+def build_witch_cauldron_blade(part):
+	blade_base = 0.38
+	length = 2.75
+	outline, plateau = profile_shape(
+		[(0, blade_base), (0, blade_base + length)],
+		[(0, 0.2), (0.1, 0.28), (0.5, 0.25), (0.8, 0.22), (0.92, 0.14), (1, 0)],
+		chamfer=0.15,
+		plateau_ratio=0.12,
+	)
+	bm = bmesh.new()
+	add_plate(bm, outline, plateau, 0.015, 0.12)
+	part(bm, "Potion")
+
+	bm = bmesh.new()
+	add_lathe(bm, [(0, -0.2), (0.2, -0.18), (0.35, -0.04), (0.38, 0.12), (0.32, 0.28), (0.29, 0.32)], 20, Matrix.Translation((0, 0, 0.1)))
+	add_torus(bm, 0.3, 0.04, 22, 6, Matrix.Translation((0, 0, 0.43)) @ Matrix.Rotation(math.radians(90), 4, "X"))
+	for side in (-1, 1):
+		add_torus(bm, 0.08, 0.022, 10, 5, Matrix.Translation((side * 0.4, 0, 0.3)) @ Matrix.Rotation(math.radians(90), 4, "Y") @ Matrix.Rotation(math.radians(90), 4, "X"))
+	for index in range(3):
+		angle = math.tau * index / 3 + math.pi / 2
+		add_spike(bm, (math.cos(angle) * 0.2, math.sin(angle) * 0.2, -0.08), (math.cos(angle) * 0.3, math.sin(angle) * 0.3, -1), 0.14, 0.045, sides=5)
+	part(bm, "Cauldron")
+
+	bm = bmesh.new()
+	add_lathe(bm, [(0, 0.38), (0.3, 0.38), (0.3, 0.4), (0, 0.42)], 20)
+	for location, radius in (((0.15, -0.08, 0.44), 0.07), ((-0.14, 0.08, 0.45), 0.06), ((0.06, 0.15, 0.43), 0.045), ((-0.22, -0.12, 0.42), 0.04), ((0.2, 0.1, 0.42), 0.035)):
+		add_ball(bm, location, radius)
+	for location, radius in (((0.32, 0, 0.75), 0.045), ((-0.34, 0, 1.15), 0.035), ((0.3, 0, 1.7), 0.03), ((-0.28, 0, 2.2), 0.04), ((0.25, 0, 2.65), 0.025)):
+		add_ball(bm, location, radius)
+	bottom = -0.04 - 0.72
+	flask = Vector((0, 0, bottom - 0.24))
+	add_ball(bm, flask, 0.15, (1, 1, 0.95))
+	part(bm, "PotionGlow")
+
+	bm = bmesh.new()
+	add_lathe(bm, [(0.06, bottom - 0.12), (0.07, bottom - 0.08), (0.05, bottom - 0.02), (0.05, bottom + 0.01)], 10)
+	add_grip(bm, -0.04, 0.72, 0.064, 0.077, 7)
+	part(bm, "WitchPurple")
+
+	bm = bmesh.new()
+	add_lathe(bm, [(0.05, bottom - 0.02), (0.065, bottom + 0.0), (0.065, bottom + 0.05), (0.05, bottom + 0.06)], 10)
+	add_pommel(bm, [(0.06, -0.06), (0.095, -0.04), (0.095, -0.01), (0.06, 0.0)])
+	part(bm, "DesertWood")
+
+	return {
+		"blade": "Potion",
+		"outline": outline,
+		"edge_glow": ("C8FF7A", 0.06),
+		"effects": {
+			"Potion": {
+				"gradient": (0.3, 3.1, [(0, "1E6A2E"), (0.5, "4EC04A"), (1, "B8FF7A")]),
+				"patterns": [("stars", "E8FFD0", 7, 0.9), ("nebula", "8AF07A", 3, 0.35)],
+			},
+			"WitchPurple": {"patterns": [("bands", "4A2280", 10, 0.5)]},
+		},
+	}
+
+
+#// Halloween 08 Reaper Scythe (Epic)
+
+def build_reaper_scythe(part):
+	head = Vector((0, 0, 2.15))
+	spine = [(0.05, 2.18), (0.35, 2.32), (0.85, 2.3), (1.3, 2.05), (1.55, 1.68)]
+	stations = [(0, 0.12, 0.2), (0.3, 0.1, 0.22), (0.7, 0.07, 0.15), (1, 0, 0)]
+	outline, plateau = profile_shape(spine, stations, chamfer=0.07)
+	bm = bmesh.new()
+	add_plate(bm, outline, plateau, 0.018, 0.08)
+	add_spike(bm, (-0.05, 0, 2.2), (-1, 0, 0.5), 0.35, 0.06, sides=4)
+	add_lathe(bm, [(0.06, -0.95), (0, -1.1)], 8)
+	part(bm, "ReaperSteel")
+
+	rim, rim_plateau = profile_shape(spine, [(t, left + 0.03, right + 0.05) for t, left, right in stations], chamfer=0.03, plateau_ratio=0.5)
+	bm = bmesh.new()
+	add_plate(bm, rim, rim_plateau, 0.006, 0.014)
+	for side in (-1, 1):
+		add_ball(bm, head + Vector((side * 0.055, -0.13, 0.04)), 0.03)
+	part(bm, "ReaperGlow")
+
+	bm = bmesh.new()
+	add_lathe(bm, [(0.065, -0.95), (0.07, 0.0), (0.065, 2.0), (0.06, 2.1)], 8)
+	add_grip(bm, 0.0, 0.8, 0.07, 0.08, 7)
+	part(bm, "ReaperWood")
+
+	bm = bmesh.new()
+	add_ball(bm, head, 0.16, (1, 0.95, 1.05))
+	add_ball(bm, head + Vector((0, -0.04, -0.12)), 0.1, (0.85, 0.8, 0.55))
+	part(bm, "Bone")
+
+	bm = bmesh.new()
+	for side in (-1, 1):
+		add_ball(bm, head + Vector((side * 0.055, -0.115, 0.04)), 0.045, (1, 0.5, 1.15))
+	add_ball(bm, head + Vector((0, -0.14, -0.04)), 0.022, (1, 0.5, 1))
+	part(bm, "Socket")
+
+	bm = bmesh.new()
+	for index, (x, length) in enumerate(((-0.1, 0.7), (0.0, 0.85), (0.1, 0.6))):
+		rag = [Vector((x - 0.06, 0)), Vector((x + 0.06, 0)), Vector((x + 0.07, -length * 0.5)), Vector((x + 0.04, -length * 0.8)), Vector((x + 0.02, -length * 0.7)), Vector((x, -length)), Vector((x - 0.03, -length * 0.75)), Vector((x - 0.07, -length * 0.85)), Vector((x - 0.06, -length * 0.4))]
+		add_plate(bm, rag, None, 0.012, matrix=Matrix.Translation((0, 0.08 + index * 0.012, 2.0)) @ Matrix.Rotation(math.radians(index * 6 - 6), 4, "Y"))
+	add_torus(bm, 0.09, 0.03, 12, 5, Matrix.Translation((0, 0, 2.0)) @ Matrix.Rotation(math.radians(90), 4, "X"))
+	part(bm, "Cloth")
+
+	return {
+		"blade": "ReaperSteel",
+		"outline": outline,
+		"edge_glow": ("C08AFF", 0.05),
+		"effects": {
+			"ReaperSteel": {"gradient": (1.6, 2.4, [(0, "3A3E4C"), (1, "8A92A8")]), "patterns": [("nebula", "6A4A9A", 3, 0.3)]},
+			"Cloth": {"gradient": (1.1, 2.0, [(0, "1A1424"), (1, "4A3E5E")])},
+		},
+	}
+
+
+#// Halloween 09 Ghost Sword (Legendary)
+
+def build_ghost_sword(part):
+	spine = [(0, 0.28), (0, 1.3), (0.12, 2.2), (-0.05, 2.9), (0.15, 3.35)]
+	stations = [(0, 0.22), (0.1, 0.28), (0.5, 0.3), (0.75, 0.24), (0.9, 0.14), (1, 0)]
+	outline, plateau = profile_shape(spine, stations, chamfer=0.11)
+	bm = bmesh.new()
+	add_plate(bm, outline, plateau)
+	part(bm, "Ghost")
+
+	rim, rim_plateau = profile_shape(spine, [(t, width + 0.05) for t, width in stations], chamfer=0.03, plateau_ratio=0.5)
+	bm = bmesh.new()
+	add_plate(bm, rim, rim_plateau, 0.006, 0.016)
+	add_cabochon(bm, (0, 0, 0.12), 0.09, 0.17)
+	bottom = -0.04 - 0.78
+	wisp = [(0, 0, bottom - 0.02), (0.1, 0, bottom - 0.15), (-0.05, 0, bottom - 0.3), (0.06, 0, bottom - 0.42)]
+	add_sweep(bm, wisp, [0.06, 0.05, 0.03, 0.0], sides=6)
+	part(bm, "GhostGlow")
+
+	bm = bmesh.new()
+	for location, size, tilt in (((-0.72, 0, 1.35), 0.15, 12), ((0.75, 0, 2.15), 0.13, -10), ((-0.6, 0, 2.85), 0.11, 15)):
+		ghost = ghost_outline(size, size * 1.6)
+		add_plate(bm, ghost, [point * 0.6 for point in ghost], 0.03, 0.06, Matrix.Translation(location) @ Matrix.Rotation(math.radians(tilt), 4, "Y"))
+	part(bm, "Ghost")
+
+	bm = bmesh.new()
+	for location, size, tilt in (((-0.72, 0, 1.35), 0.15, 12), ((0.75, 0, 2.15), 0.13, -10), ((-0.6, 0, 2.85), 0.11, 15)):
+		rotation = Matrix.Rotation(math.radians(tilt), 3, "Y")
+		for side in (-1, 1):
+			for y in (-0.065, 0.065):
+				add_ball(bm, Vector(location) + rotation @ Vector((side * size * 0.32, y, size * 0.15)), size * 0.13, (1, 0.5, 1.4))
+			add_ball(bm, Vector(location) + rotation @ Vector((0, side * 0.065, -size * 0.3)), size * 0.12, (1, 0.5, 1.2))
+	part(bm, "Socket")
+
+	bm = bmesh.new()
+	for index in range(-4, 5):
+		if index == 0:
+			continue
+		rotation = Matrix.Rotation(math.radians(90 if index % 2 else 0), 4, "X")
+		add_torus(bm, 0.055, 0.016, 10, 5, Matrix.Translation((index * 0.085, 0, 0.12 - abs(index) * 0.012)) @ rotation)
+	add_torus(bm, 0.14, 0.035, 16, 6, Matrix.Translation((0, 0, 0.12)))
+	add_pommel(bm, [(0.06, -0.06), (0.095, -0.04), (0.095, -0.01), (0.06, 0.0)])
+	add_grip(bm, -0.04, 0.78, 0.064, 0.077, 7)
+	part(bm, "Chain")
+
+	face = [
+		[(-0.12, 2.68), (-0.08, 2.74), (-0.04, 2.68), (-0.08, 2.6), (-0.12, 2.68)],
+		[(0.03, 2.68), (0.07, 2.74), (0.11, 2.68), (0.07, 2.6), (0.03, 2.68)],
+		[(-0.04, 2.48), (0.0, 2.52), (0.04, 2.48), (0.0, 2.42), (-0.04, 2.48)],
+	]
+	return {
+		"blade": "Ghost",
+		"outline": outline,
+		"edge_glow": ("8AF0FF", 0.07),
+		"decals": face,
+		"decal_width": 0.03,
+		"decal_colors": ("22304A", "6A8AB0"),
+		"effects": {
+			"Ghost": {"gradient": (0.2, 3.4, [(0, "8ACAE8"), (0.6, "D8F0FF"), (1, "FFFFFF")]), "patterns": [("nebula", "FFFFFF", 2.5, 0.4), ("stars", "FFFFFF", 9, 0.6)]},
+		},
+	}
+
+
+#// Halloween 10 Vampire Sword (Legendary)
+
+def build_vampire_sword(part):
+	blade_base = 0.26
+	spine = [(0, blade_base), (0, blade_base + 3.2)]
+	stations = [(0, 0.16), (0.08, 0.21), (0.6, 0.18), (0.8, 0.25), (0.9, 0.19), (1, 0)]
+	gothic = [(t, side, 0.12, -0.09, 0.8) for t, side in ((0.3, 1), (0.3, -1), (0.55, 1), (0.55, -1), (0.78, 1), (0.78, -1))]
+	outline, plateau = profile_shape(spine, stations, chamfer=0.09, features=gothic)
+	bm = bmesh.new()
+	add_plate(bm, outline, plateau, 0.018, 0.09)
+	part(bm, "Vampire")
+
+	bm = bmesh.new()
+	for side in (-1, 1):
+		curl = [(side * 0.08, 0.14), (side * 0.3, 0.1), (side * 0.42, 0.2), (side * 0.38, 0.32), (side * 0.3, 0.27)]
+		add_sweep(bm, curl, [0.05, 0.045, 0.035, 0.025, 0.0])
+		add_sweep(bm, [(side * 0.1, 0.1), (side * 0.22, -0.05), (side * 0.18, -0.14)], [0.035, 0.03, 0.0])
+	add_box(bm, (0.26, 0.22, 0.3), (0, 0, 0.14), 0.06)
+	bottom = -0.04 - 0.78
+	for height in (-0.04, -0.42, bottom + 0.02):
+		add_pommel(bm, [(0.06, height - 0.02), (0.095, height - 0.01), (0.095, height + 0.02), (0.06, height + 0.03)])
+	coffin = [Vector((0, 0.0)), Vector((0.1, -0.05)), Vector((0.08, -0.32)), Vector((0, -0.36)), Vector((-0.08, -0.32)), Vector((-0.1, -0.05))]
+	coffin = [Vector((point.x * 1.2, point.y + 0.04)) for point in [Vector((-0.06, 0.04)), Vector((0.06, 0.04))]] + coffin[1:]
+	add_plate(bm, coffin, [point * 0.6 + Vector((0, -0.07)) for point in coffin], 0.035, 0.07, Matrix.Translation((0, 0, bottom - 0.02)))
+	part(bm, "Gold")
+
+	bm = bmesh.new()
+	for side in (-1, 1):
+		wing, bones = bat_wing_outline(0.36)
+		wing_matrix = Matrix.Translation((side * 0.16, 0.03, 0.06)) @ Matrix.Diagonal((side, 1, 1, 1)) @ Matrix.Rotation(math.radians(-8), 4, "Y")
+		add_plate(bm, wing, None, 0.02, matrix=wing_matrix)
+		for bone in bones:
+			add_sweep(bm, [(point.x, point.y) for point in bone], [0.018] * (len(bone) - 1) + [0.006], sides=4, matrix=wing_matrix)
+	add_grip(bm, -0.04, 0.78, 0.064, 0.077, 7)
+	part(bm, "BatBody")
+
+	bm = bmesh.new()
+	add_cabochon(bm, (0, 0, 0.16), 0.085, 0.16)
+	add_cabochon(bm, (0, 0, bottom - 0.16), 0.045, 0.1)
+	part(bm, "BloodGlow")
+
+	bm = bmesh.new()
+	for side in (-1, 1):
+		for y in (-0.11, 0.11):
+			add_spike(bm, (side * 0.07, y, 0.02), (0, 0, -1), 0.12, 0.022, sides=5)
+	part(bm, "Tooth")
+
+	bm = bmesh.new()
+	rose_center = Vector((0, -0.13, 0.32))
+	for index in range(7):
+		angle = index * 2.4
+		distance = 0.02 + index * 0.012
+		add_ball(bm, rose_center + Vector((math.cos(angle) * distance, -0.01 * index, math.sin(angle) * distance)), 0.045 + index * 0.004, (1, 0.6, 1))
+	part(bm, "Rose")
+
+	drips = [[(0, blade_base + 0.2), (0, blade_base + 2.7)]]
+	for x, length in ((-0.1, 0.55), (-0.05, 0.9), (0.06, 1.15), (0.11, 0.45), (-0.12, 1.6), (0.1, 1.9)):
+		top = blade_base + 2.75
+		drips.append([(x, top - 0.25), (x, top - 0.25 - length)])
+	return {
+		"blade": "Vampire",
+		"outline": outline,
+		"edge_glow": ("FF4A5A", 0.05),
+		"decals": drips,
+		"decal_width": 0.022,
+		"decal_colors": ("4A0610", "FF8A8A"),
+		"effects": {"Vampire": {"gradient": (0.26, 3.5, [(0, "3A0610"), (0.6, "9A1428"), (1, "E0404E")]), "patterns": [("nebula", "5A0A18", 3, 0.35)]}},
+	}
+
+
+#// Halloween 11 Headless Horseman Blade (Mythic)
+
+def build_headless_horseman_blade(part):
+	blade_base = 0.46
+	spine = [(0, blade_base), (0, blade_base + 3.1)]
+	stations = [(0, 0.22), (0.08, 0.28), (0.55, 0.27), (0.82, 0.24), (0.92, 0.15), (1, 0)]
+	teeth = [(t, side, 0.14, -0.1, 0.6) for t, side in ((0.5, 1), (0.58, -1), (0.66, 1), (0.74, -1), (0.82, 1))]
+	outline, plateau = profile_shape(spine, stations, chamfer=0.11, features=teeth)
+	bm = bmesh.new()
+	add_plate(bm, outline, plateau)
+	part(bm, "Horseman")
+
+	rim, rim_plateau = profile_shape(spine, [(t, width + 0.05) for t, width in stations], chamfer=0.03, plateau_ratio=0.5)
+	pumpkin_center = (0, 0, 0.2)
+	bm = bmesh.new()
+	add_plate(bm, rim, rim_plateau, 0.006, 0.016)
+	add_pumpkin_face(bm, pumpkin_center, 0.3)
+	for side in (-1, 1):
+		add_flame(bm, Vector((side * 0.2, 0.35)), (side * 0.35, 1), 0.55, 0.11, side)
+		add_flame(bm, Vector((side * 0.3, 0.25)), (side * 0.8, 1), 0.4, 0.08, side)
+		add_flame(bm, Vector((side * 0.12, 0.42)), (side * 0.1, 1), 0.65, 0.09, -side)
+	bottom = -0.1 - 0.78
+	add_flame(bm, Vector((0, bottom - 0.12)), (0, -1), 0.3, 0.07)
+	part(bm, "HellFire")
+
+	bm = bmesh.new()
+	add_pumpkin(bm, pumpkin_center, 0.3)
+	part(bm, "Pumpkin")
+
+	bm = bmesh.new()
+	add_sweep(bm, [(0, 0.48), (0.05, 0.56), (0.12, 0.58)], [0.045, 0.04, 0.035])
+	part(bm, "Vine")
+
+	bm = bmesh.new()
+	for side in (-1, 1):
+		shoe = [(side * 0.2, 0.0), (side * 0.48, -0.02), (side * 0.6, 0.12), (side * 0.56, 0.28), (side * 0.46, 0.32)]
+		add_sweep(bm, shoe, [0.05, 0.045, 0.04, 0.035, 0.0])
+	add_pommel(bm, [(0.06, -0.12), (0.1, -0.1), (0.1, -0.06), (0.06, -0.05)])
+	add_pommel(bm, [(0.05, bottom + 0.01), (0.1, bottom - 0.03), (0.1, bottom - 0.08), (0.06, bottom - 0.11)])
+	add_grip(bm, -0.1, 0.78, 0.064, 0.077, 7)
+	part(bm, "IronBlack")
+
+	return {
+		"blade": "Horseman",
+		"outline": outline,
+		"edge_glow": ("FF8A2E", 0.07),
+		"effects": {
+			"Horseman": {"gradient": (0.4, 3.6, [(0, "120C10"), (1, "3A2A34")]), "patterns": [("cells", "FF7A1F", 2.6, 0.7), ("flames", "FFB347", 4, 0.25)]},
+			"HellFire": {"gradient": (0.0, 1.2, [(0, "FF5A1A"), (1, "FFE07A")])},
+		},
+	}
+
+
+#// Halloween 12 Nightmare King Blade (Exclusive)
+
+def build_nightmare_king_blade(part):
+	blade_base = 0.62
+	spine = [(0, blade_base), (0, blade_base + 2.0), (0.1, blade_base + 3.2), (0.35, blade_base + 4.1)]
+	stations = [(0, 0.3), (0.06, 0.38), (0.3, 0.34), (0.55, 0.42), (0.72, 0.36), (0.84, 0.48), (0.93, 0.34), (1, 0)]
+	teeth = [(t, side, 0.18, -0.15, 0.7) for t, side in ((0.22, 1), (0.26, -1), (0.45, 1), (0.49, -1), (0.66, 1), (0.7, -1), (0.86, 1), (0.88, -1))]
+	outline, plateau = profile_shape(spine, stations, chamfer=0.13, features=teeth)
+	bm = bmesh.new()
+	add_plate(bm, outline, plateau, 0.022, 0.12)
+	part(bm, "NightmareBlade")
+
+	pumpkin_center = (0, 0, 0.3)
+	rim, rim_plateau = profile_shape(spine, [(t, width + 0.08) for t, width in stations], chamfer=0.04, plateau_ratio=0.5)
+	bm = bmesh.new()
+	add_plate(bm, rim, rim_plateau, 0.006, 0.016)
+	add_pumpkin_face(bm, pumpkin_center, 0.36)
+	for side in (-1, 1):
+		add_flame(bm, Vector((side * 0.28, 0.55)), (side * 0.3, 1), 0.6, 0.12, side)
+		add_flame(bm, Vector((side * 0.36, 0.42)), (side * 0.9, 1), 0.45, 0.09, side)
+	path = catmull_rom(spine, 8) + [Vector(spine[-1])]
+	for phase in (0,):
+		helix = []
+		for step in range(14):
+			t = step / 13
+			center = point_on_path(path, 0.05 + 0.6 * t)
+			angle = t * math.tau * 1.5 + phase
+			helix.append((center.x + math.cos(angle) * 0.6, math.sin(angle) * 0.35, center.y))
+		add_sweep(bm, helix, [0.03] * 4 + [0.024] * 6 + [0.014, 0.008, 0.004, 0.0], sides=5, smoothness=3)
+	bottom = -0.1 - 0.95
+	for side in (-1, 1):
+		add_ball(bm, (side * 0.055, -0.13, bottom - 0.1), 0.03)
+	part(bm, "SoulGlow")
+
+	bm = bmesh.new()
+	add_pumpkin(bm, pumpkin_center, 0.36, ribs=8, sides=16)
+	part(bm, "Pumpkin")
+
+	bm = bmesh.new()
+	crown_base = 0.56
+	add_lathe(bm, [(0.2, crown_base), (0.22, crown_base), (0.23, crown_base + 0.08), (0.21, crown_base + 0.08)], 16, closed=True)
+	for index in range(5):
+		angle = math.tau * index / 5 - math.pi / 2
+		direction = Vector((math.cos(angle) * 0.25, math.sin(angle) * 0.25, 1))
+		root = Vector((math.cos(angle) * 0.22, math.sin(angle) * 0.22, crown_base + 0.06))
+		add_spike(bm, root, direction, 0.2, 0.05, sides=4)
+		add_ball(bm, root + direction.normalized() * 0.21, 0.03)
+	add_pommel(bm, [(0.06, -0.12), (0.1, -0.1), (0.1, -0.06), (0.06, -0.05)])
+	add_pommel(bm, [(0.06, -0.5), (0.09, -0.48), (0.09, -0.44), (0.06, -0.42)])
+	add_pommel(bm, [(0.06, bottom + 0.03), (0.09, bottom + 0.01), (0.09, bottom - 0.02), (0.06, bottom - 0.03)])
+	moon = crescent_shape(0.3, 0.25, 0.11)
+	add_plate(bm, moon, None, 0.03, matrix=Matrix.Translation((-0.85, 0, blade_base + 3.4)))
+	part(bm, "Gold")
+
+	bm = bmesh.new()
+	for index in range(5):
+		angle = math.tau * index / 5 - math.pi / 2 + math.pi / 5
+		add_cabochon(bm, (math.cos(angle) * 0.23, math.sin(angle) * 0.23, crown_base + 0.04), 0.03, 0.02, direction=(math.cos(angle), math.sin(angle), 0))
+	part(bm, "Ruby", CRYSTAL_SMOOTH_ANGLE)
+
+	bm = bmesh.new()
+	for side in (-1, 1):
+		wing, bones = bat_wing_outline(0.62)
+		wing_matrix = Matrix.Translation((side * 0.24, 0.1, 0.22)) @ Matrix.Diagonal((side, 1, 1, 1)) @ Matrix.Rotation(math.radians(-6), 4, "Y")
+		add_plate(bm, wing, None, 0.025, matrix=wing_matrix)
+		for bone in bones:
+			add_sweep(bm, [(point.x, point.y) for point in bone], [0.026] * (len(bone) - 1) + [0.008], sides=4, smoothness=3, matrix=wing_matrix)
+	for location, scale, tilt in (((0.85, 0, 1.6), 0.12, 15), ((-0.8, 0, 2.5), 0.1, -12), ((0.75, 0, 3.6), 0.09, 20)):
+		wing, _ = bat_wing_outline(scale)
+		for side in (-1, 1):
+			add_plate(bm, wing, None, 0.015, matrix=Matrix.Translation(location) @ Matrix.Rotation(math.radians(tilt), 4, "Y") @ Matrix.Diagonal((side, 1, 1, 1)))
+		add_ball(bm, Vector(location) + Vector((0, 0, 0.02)), scale * 0.35, (1, 0.8, 1.2))
+	add_grip(bm, -0.1, 0.95, 0.07, 0.084, 8)
+	add_ball(bm, (0, 0, bottom - 0.12), 0.14, (1, 0.95, 1.05))
+	part(bm, "BatBody")
+
+	runes = []
+	for index in range(8):
+		center = Vector((0, blade_base + 0.45 + index * 0.42))
+		runes.append([center + Vector(point) * 0.075 for point in VOID_RUNES[(index + 3) % len(VOID_RUNES)]])
+	return {
+		"blade": "NightmareBlade",
+		"outline": outline,
+		"edge_glow": ("7CFF9A", 0.08),
+		"decals": runes,
+		"decal_width": 0.016,
+		"decal_colors": ("7CFF9A", "E0FFE8"),
+		"effects": {
+			"NightmareBlade": {
+				"gradient": (0.6, 4.7, [(0, "0E0818"), (0.5, "2A1A40"), (1, "5A3A8A")]),
+				"patterns": [("nebula", "3E7A5A", 2, 0.35), ("cells", "7CFF9A", 2.4, 0.35), ("stars", "FFFFFF", 10, 0.8)],
+			},
+		},
+	}
+
+
+HALLOWEEN_SWORDS = [
+	("CandyCornSword", "Common", build_candy_corn_sword),
+	("ScarecrowSickle", "Common", build_scarecrow_sickle),
+	("TombstoneSword", "Uncommon", build_tombstone_sword),
+	("PumpkinSword", "Uncommon", build_pumpkin_sword),
+	("BatWingSword", "Rare", build_bat_wing_sword),
+	("SpiderSword", "Rare", build_spider_sword),
+	("WitchCauldronBlade", "Epic", build_witch_cauldron_blade),
+	("ReaperScythe", "Epic", build_reaper_scythe),
+	("GhostSword", "Legendary", build_ghost_sword),
+	("VampireSword", "Legendary", build_vampire_sword),
+	("HeadlessHorsemanBlade", "Mythic", build_headless_horseman_blade),
+	("NightmareKingBlade", "Exclusive", build_nightmare_king_blade),
+]
+
+
 WORLDS = {
 	"Starter": SWORDS,
 	"Desert": DESERT_SWORDS,
+	"Halloween": HALLOWEEN_SWORDS,
 }
 
 
