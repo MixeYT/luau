@@ -170,13 +170,23 @@ PALETTE = {
 	"HellFire": ("FF8A2E", "C0380E", "FFE8A0"),
 	"NightmareBlade": ("2A1A40", "0A0614", "8A6AD0"),
 	"SoulGlow": ("7CFF9A", "1E9A4A", "E0FFE8"),
+	"SickleSteel": ("9AA2AE", "3A3F4A", "E6ECF4"),
+	"Crow": ("2E2E3E", "0E0E14", "6E6E8E"),
+	"Beak": ("F7A93A", "8A4A0E", "FFE0A0"),
+	"Moss": ("6AA84A", "25501E", "B0E07A"),
+	"Dirt": ("6E4A30", "2E1C10", "A87A52"),
+	"SpiderEye": ("FF2E3A", "8A0612", "FFB0B0"),
+	"Spirit": ("F4FAFF", "8AA6C8", "FFFFFF"),
+	"Blush": ("FF9AB8", "B8506E", "FFD0E0"),
+	"GhostEye": ("2A3050", "0C0E1E", "5A6890"),
+	"Cape": ("6A1E2A", "1E060C", "A04A58"),
 }
 
 # Materials split into their own mesh so they can be set to Neon in Roblox.
 GLOW_MATERIALS = {
 	"FireGem", "Flame", "DemonGlow", "DemonEye", "StarGlow", "HaloGlow", "VoidGlow", "VoidCyan",
 	"Venom", "CurseGlow", "SandGlow", "SunGlow", "DjinnGlow", "DjinnSmoke",
-	"PumpkinGlow", "BatEye", "PotionGlow", "ReaperGlow", "GhostGlow", "BloodGlow", "HellFire", "SoulGlow",
+	"PumpkinGlow", "BatEye", "PotionGlow", "ReaperGlow", "GhostGlow", "BloodGlow", "HellFire", "SoulGlow", "SpiderEye",
 }
 
 
@@ -2179,48 +2189,74 @@ def add_flame(bm, root, direction, length, width, side=1, matrix=Matrix()):
 
 #// Halloween 01 Candy Corn Sword (Common)
 
+def add_candy_fan(bm, root, direction, length, radius, pleats=8):
+	# Twisted end of a candy wrapper that opens up into a pleated fan.
+	before = set(bm.verts)
+	add_lathe(bm, [(radius * 0.3, 0), (radius * 0.22, length * 0.25), (radius * 0.75, length * 0.75), (radius, length), (0, length * 0.92)], pleats * 2)
+	for vert in new_verts_since(bm, before):
+		if vert.co.z > length * 0.4:
+			pleat = 1 + 0.2 * math.cos(pleats * math.atan2(vert.co.y, vert.co.x))
+			vert.co.x *= pleat
+			vert.co.y *= pleat
+	bmesh.ops.transform(bm, matrix=oriented(root, direction), verts=new_verts_since(bm, before))
+
+
 def build_candy_corn_sword(part):
-	blade_base = 0.14
+	blade_base = 0.16
 	length = 2.15
+	tiers = (0.39, 0.735)
 	outline, plateau = profile_shape(
 		[(0, blade_base), (0, blade_base + length)],
-		[(0, 0.27), (0.06, 0.3), (0.5, 0.22), (0.85, 0.13), (1, 0.09)],
+		[(0, 0.27), (0.06, 0.31), (0.5, 0.23), (0.85, 0.14), (1, 0.09)],
 		tip="round",
 		chamfer=0.1,
 		plateau_ratio=0.4,
+		features=[(t, side, 0.08, 0.035, 0) for t in tiers for side in (-1, 1)],
 	)
 	bm = bmesh.new()
 	add_plate(bm, outline, plateau, 0.06, 0.12)
 	part(bm, "CandyCorn")
 
 	bm = bmesh.new()
+	add_ball(bm, (0, 0, 0.08), 0.15, (1.45, 1.0, 0.95))
 	for side in (-1, 1):
-		add_sweep(bm, [(side * 0.1, 0.08), (side * 0.22, 0.08)], [0.05, 0.035])
-		for angle in (-38, 0, 38):
-			direction = Vector((side * math.cos(math.radians(angle)), 0, math.sin(math.radians(angle))))
-			add_spike(bm, (side * 0.26, 0, 0.08), direction, 0.32, 0.08, sides=6)
-	add_ball(bm, (0, 0, 0.08), 0.13, (1.3, 1.0, 0.9))
+		add_candy_fan(bm, (side * 0.18, 0, 0.08), (side, 0, 0.18), 0.26, 0.17)
 	part(bm, "Wrapper")
 
+	bottom = -0.84
 	bm = bmesh.new()
-	add_grip(bm, -0.04, 0.72, 0.058, 0.07, 6)
-	bottom = -0.04 - 0.72
-	add_lathe(bm, [(0.03, bottom + 0.02), (0.03, bottom - 0.12)], 8)
+	add_lathe(bm, [(0.07, -0.02), (0.08, -0.06), (0.08, bottom + 0.04), (0.07, bottom)], 10)
+	add_lathe(bm, [(0.04, bottom + 0.02), (0.04, bottom - 0.16)], 8)
 	part(bm, "CandyStick")
 
-	lolly_center = Vector((0, 0, bottom - 0.3))
+	stripe = [(math.cos(angle) * 0.108, math.sin(angle) * 0.108, -0.07 + (bottom + 0.1) * angle / (math.tau * 3)) for angle in numpy.linspace(0, math.tau * 3, 25)]
+	lolly_center = Vector((0, 0, bottom - 0.34))
 	bm = bmesh.new()
-	add_lathe(bm, [(0, -0.07), (0.17, -0.06), (0.2, 0.0), (0.17, 0.06), (0, 0.07)], 16, oriented(lolly_center, (0, 1, 0)))
+	add_sweep(bm, stripe, [0.022] * 25, sides=4, smoothness=2)
+	for side in (-1, 1):
+		swirl = []
+		for angle in numpy.linspace(0, math.tau * 2, 17):
+			radius = 0.025 + 0.14 * angle / (math.tau * 2)
+			swirl.append(lolly_center + Vector((math.cos(angle) * radius * side, side * (0.068 - radius * 0.06), math.sin(angle) * radius)))
+		add_sweep(bm, swirl, [0.02] * 17, sides=4, flatten=0.6, smoothness=2)
 	part(bm, "Lollipop")
 
 	bm = bmesh.new()
-	for radius in (0.06, 0.14):
-		for y in (-0.06, 0.06):
-			add_torus(bm, radius, 0.022, 18, 5, Matrix.Translation(lolly_center + Vector((0, y, 0))))
+	add_lathe(bm, [(0, -0.07), (0.17, -0.06), (0.2, 0.0), (0.17, 0.06), (0, 0.07)], 16, oriented(lolly_center, (0, 1, 0)))
 	part(bm, "CandyWhite")
 
+	tier_heights = [blade_base + t * length for t in tiers]
+	shine = [
+		[(-0.15, blade_base + 0.18), (-0.13, tier_heights[0] - 0.12)],
+		[(-0.12, tier_heights[0] + 0.12), (-0.1, tier_heights[1] - 0.12)],
+		[(-0.075, tier_heights[1] + 0.1), (-0.06, tier_heights[1] + 0.35)],
+		[(0.16, blade_base + 0.25), (0.15, blade_base + 0.38)],
+	]
 	return {
 		"blade": "CandyCorn",
+		"decals": shine,
+		"decal_width": 0.022,
+		"decal_colors": ("FFFDF6", "FFFFFF"),
 		"effects": {
 			"CandyCorn": {
 				"gradient": (blade_base, blade_base + length + 0.1, [
@@ -2228,7 +2264,7 @@ def build_candy_corn_sword(part):
 				]),
 				"patterns": [("stars", "FFFFFF", 12, 0.45)],
 			},
-			"CandyStick": {"patterns": [("bands", "FF4FA0", 9, 1)]},
+			"Wrapper": {"gradient": (-0.2, 0.4, [(0, "7A2AB8"), (1, "C07AF0")]), "patterns": [("stars", "FFFFFF", 9, 0.8)]},
 		},
 	}
 
@@ -2236,56 +2272,85 @@ def build_candy_corn_sword(part):
 #// Halloween 02 Scarecrow Sickle (Common)
 
 def build_scarecrow_sickle(part):
-	spine = [(0, 0.3), (0.02, 0.9), (0.25, 1.6), (0.75, 1.95), (1.2, 1.85), (1.42, 1.6)]
-	stations = [(0, 0.07, 0.07), (0.2, 0.12, 0.07), (0.45, 0.38, 0.07), (0.68, 0.46, 0.06), (0.86, 0.3, 0.05), (1, 0, 0)]
-	serration = [(t, 1, 0.05, -0.035, 0.6) for t in (0.4, 0.47, 0.54, 0.61, 0.68, 0.75, 0.82)]
-	outline, plateau = profile_shape(spine, stations, chamfer=0.09, features=serration)
+	spine = [(0, 0.34), (0.02, 0.8), (0.16, 1.28), (0.46, 1.62), (0.86, 1.74), (1.22, 1.62), (1.42, 1.38)]
+	stations = [(0, 0.065, 0.065), (0.12, 0.075, 0.075), (0.35, 0.17, 0.11), (0.6, 0.18, 0.1), (0.82, 0.12, 0.06), (1, 0, 0)]
+	serration = [(t, 1, 0.045, -0.03, 0.7) for t in (0.42, 0.48, 0.54, 0.6, 0.66, 0.72, 0.78)]
+	outline, plateau = profile_shape(spine, stations, chamfer=0.08, features=serration)
 	bm = bmesh.new()
-	add_plate(bm, outline, plateau, 0.02, 0.075)
-	part(bm, "Rust")
+	add_plate(bm, outline, plateau, 0.018, 0.07)
+	part(bm, "SickleSteel")
 
 	bm = bmesh.new()
-	for index in range(14):
-		angle = math.tau * index / 14
-		direction = Vector((math.cos(angle) * 0.7, math.sin(angle) * 0.7, 1.0 if index % 2 else 0.6))
-		add_spike(bm, (math.cos(angle) * 0.06, math.sin(angle) * 0.06, 0.12), direction, 0.26 if index % 3 else 0.2, 0.03, sides=4)
-	bottom = -0.02 - 0.85
-	for index in range(10):
-		angle = math.tau * index / 10
-		direction = Vector((math.cos(angle) * 0.6, math.sin(angle) * 0.6, -1))
-		add_spike(bm, (math.cos(angle) * 0.08, math.sin(angle) * 0.08, bottom - 0.28), direction, 0.18, 0.025, sides=4)
-	part(bm, "Straw")
+	add_lathe(bm, [(0.1, 0.12), (0.115, 0.16), (0.115, 0.36), (0.09, 0.42)], 8)
+	for y in (-0.115, 0.115):
+		add_ball(bm, (0, y, 0.27), 0.03)
+	part(bm, "IronBlack")
+
+	bottom = 0.12 - 1.0
+	bm = bmesh.new()
+	add_grip(bm, 0.12, 1.0, 0.062, 0.068, 8)
+	part(bm, "Wood")
 
 	bm = bmesh.new()
-	for height in (0.1, 0.2):
-		add_torus(bm, 0.085, 0.025, 12, 5, Matrix.Translation((0, 0, height)) @ Matrix.Rotation(math.radians(90), 4, "X"))
+	for height in (0.06, -0.01, bottom - 0.01):
+		add_torus(bm, 0.098, 0.024, 12, 5, Matrix.Translation((0, 0, height)) @ Matrix.Rotation(math.radians(90), 4, "X"))
 	part(bm, "Rope")
 
 	bm = bmesh.new()
-	add_grip(bm, 0.3, 1.17, 0.06, 0.068, 9)
-	part(bm, "Wood")
+	for index in range(12):
+		angle = math.tau * index / 12
+		direction = Vector((math.cos(angle) * 0.8, math.sin(angle) * 0.8, 0.9 if index % 2 else 0.5))
+		add_spike(bm, (math.cos(angle) * 0.08, math.sin(angle) * 0.08, 0.36), direction, 0.24 if index % 3 else 0.18, 0.03, sides=4)
+	for index in range(10):
+		angle = math.tau * index / 10 + 0.3
+		direction = Vector((math.cos(angle), math.sin(angle), 0.25 if index % 2 else -0.1))
+		add_spike(bm, (math.cos(angle) * 0.08, math.sin(angle) * 0.08, bottom - 0.03), direction, 0.2 if index % 3 else 0.15, 0.028, sides=4)
+	part(bm, "Straw")
 
-	head = Vector((0, 0, bottom - 0.2))
+	head = Vector((0, 0, bottom - 0.25))
 	bm = bmesh.new()
-	add_ball(bm, head, 0.2, (1, 0.95, 1.05))
-	add_box(bm, (0.12, 0.12, 0.08), (0, 0, bottom - 0.02), 0.03)
+	add_ball(bm, head, 0.22, (1, 0.95, 1.05))
+	add_box(bm, (0.1, 0.03, 0.09), head + Vector((0.12, -0.17, 0.07)), 0.012)
 	part(bm, "Burlap")
 
 	bm = bmesh.new()
 	for side in (-1, 1):
-		add_cabochon(bm, head + Vector((side * 0.075, -0.175, 0.05)), 0.04, 0.03, direction=(0, -1, 0))
-	smile = [head + Vector((x, -0.19 + abs(x) * 0.3, -0.06 + x * x * 2.2)) for x in (-0.1, -0.05, 0, 0.05, 0.1)]
-	add_sweep(bm, smile, [0.01] * 5, sides=4, smoothness=2)
-	for x in (-0.075, -0.025, 0.025, 0.075):
-		add_sweep(bm, [head + Vector((x, -0.19 + abs(x) * 0.3, -0.09 + x * x * 2.2)), head + Vector((x, -0.19 + abs(x) * 0.3, -0.03 + x * x * 2.2))], [0.007, 0.007], sides=4)
+		add_cabochon(bm, head + Vector((side * 0.085, -0.19, 0.05)), 0.045, 0.03, direction=(0, -1, 0))
+	smile = [head + Vector((x, -0.205 + abs(x) * 0.35, -0.07 + x * x * 2.4)) for x in (-0.11, -0.055, 0, 0.055, 0.11)]
+	add_sweep(bm, smile, [0.011] * 5, sides=4, smoothness=2)
+	for x in (-0.08, -0.027, 0.027, 0.08):
+		stitch = head + Vector((x, -0.205 + abs(x) * 0.35, -0.07 + x * x * 2.4))
+		add_sweep(bm, [stitch + Vector((0, 0, -0.03)), stitch + Vector((0, 0, 0.03))], [0.008, 0.008], sides=4)
 	part(bm, "Socket")
 
+	crow = Vector((0.64, 0, 1.88))
+	crow_scale = Matrix.Translation(crow) @ Matrix.Scale(1.35, 4) @ Matrix.Translation(-crow)
+	bm = bmesh.new()
+	add_ball(bm, crow + Vector((0, 0, 0.1)), 0.11, (1.25, 0.85, 0.9))
+	add_ball(bm, crow + Vector((0.13, 0, 0.2)), 0.072)
+	add_plate(bm, [Vector(point) for point in ((-0.08, 0.1), (-0.3, 0.04), (-0.33, 0.1), (-0.31, 0.15), (-0.1, 0.16))], None, 0.02, matrix=Matrix.Translation(crow))
+	for y in (-0.085, 0.085):
+		wing = [Vector(point) for point in ((0.08, 0.15), (-0.05, 0.19), (-0.2, 0.13), (-0.25, 0.06), (-0.1, 0.06), (0.05, 0.07))]
+		add_plate(bm, wing, None, 0.012, matrix=Matrix.Translation(crow + Vector((0, y, 0))))
+	bmesh.ops.transform(bm, matrix=crow_scale, verts=bm.verts)
+	part(bm, "Crow")
+
+	bm = bmesh.new()
+	add_spike(bm, crow + Vector((0.19, 0, 0.2)), (1, 0, -0.25), 0.1, 0.03, sides=4)
+	for y in (-0.035, 0.035):
+		add_sweep(bm, [crow + Vector((0.02, y, 0.04)), crow + Vector((0.03, y, -0.03))], [0.012, 0.01], sides=4)
+		add_ball(bm, crow + Vector((0.16, y * 1.6, 0.23)), 0.016)
+	bmesh.ops.transform(bm, matrix=crow_scale, verts=bm.verts)
+	part(bm, "Beak")
+
 	return {
-		"blade": "Rust",
-		"decals": [[(0.5, 1.82), (0.56, 1.76), (0.53, 1.7)], [(0.15, 1.3), (0.2, 1.26), (0.18, 1.2)]],
+		"blade": "SickleSteel",
+		"outline": outline,
+		"edge_glow": ("F2F6FA", 0.03),
 		"effects": {
-			"Rust": {"gradient": (0.3, 2.0, [(0, "7A3A1E"), (1, "C07A4A")]), "patterns": [("cells", "5A2A14", 4, 0.35)]},
+			"SickleSteel": {"gradient": (0.3, 1.95, [(0, "6E747E"), (1, "B8C0CA")]), "patterns": [("nebula", "A0603A", 4, 0.55)]},
 			"Burlap": {"patterns": [("bands", "8A6A3E", 22, 0.35)]},
+			"Crow": {"patterns": [("cells", "5A5A80", 9, 0.35)]},
 		},
 	}
 
@@ -2298,48 +2363,78 @@ LETTER_P = [[(-1, -1), (-1, 1), (0.5, 1), (0.9, 0.55), (0.5, 0.05), (-1, 0.05)]]
 
 
 def build_tombstone_sword(part):
-	blade_base = 0.28
+	blade_base = 0.22
 	length = 1.95
 	top = blade_base + length
 	outline, plateau = profile_shape(
 		[(0, blade_base), (0, top)],
-		[(0, 0.27), (0.05, 0.3), (1, 0.3)],
+		[(0, 0.28), (1, 0.3)],
 		tip="round",
 		chamfer=0.08,
-		features=[(0.35, 1, 0.1, 0.06, 0.3), (0.7, -1, 0.12, 0.07, -0.2), (0.88, 1, 0.08, 0.05, 0)],
+		features=[(0.38, 1, 0.1, 0.06, 0.3), (0.72, -1, 0.12, 0.07, -0.2), (0.9, 1, 0.08, 0.05, 0)],
 	)
 	bm = bmesh.new()
 	add_plate(bm, outline, plateau, 0.05, 0.13)
 	part(bm, "GraveStone")
 
 	bm = bmesh.new()
-	for height in (0.06, 0.24):
-		add_box(bm, (1.0, 0.07, 0.06), (0, 0, height), 0.015)
-	for x in (-0.44, -0.22, 0.22, 0.44):
-		add_box(bm, (0.05, 0.05, 0.36), (x, 0, 0.17), 0.012)
-		add_spike(bm, (x, 0, 0.35), (0, 0, 1), 0.16, 0.045, sides=4)
+	for x, z, radius in ((-0.2, blade_base + 0.18, 0.085), (0.21, blade_base + 0.14, 0.07), (0.29, top - 0.5, 0.06), (-0.3, blade_base + 0.85, 0.055), (-0.26, top - 0.12, 0.05)):
+		add_ball(bm, (x, 0, z), radius, (1.1, 1.95, 0.8))
+	for location in ((-0.25, 0, blade_base + 0.4), (0.24, 0, blade_base + 0.3)):
+		add_ball(bm, location, 0.04, (1, 3.5, 0.9))
+	part(bm, "Moss")
+
+	bm = bmesh.new()
+	add_lathe(bm, [(0.48, -0.03), (0.44, 0.1), (0.33, 0.22), (0.16, 0.3), (0, 0.32)], 14, Matrix.Diagonal((1, 0.52, 1, 1)))
+	part(bm, "Dirt")
+
+	bm = bmesh.new()
+	for index in range(11):
+		x = -0.36 + index * 0.072
+		height = 0.12 + 0.17 * math.sqrt(max(0, 1 - (x / 0.46) ** 2))
+		for y in (-0.17, 0.17):
+			if abs(x) < 0.32:
+				add_spike(bm, (x, y * (1 - abs(x) / 0.6), height - 0.04), (x * 0.6 + (0.15 if index % 2 else -0.15), y * 2, 1), 0.12 if index % 3 else 0.09, 0.025, sides=3)
+	part(bm, "Leaf")
+
+	bm = bmesh.new()
+	add_box(bm, (1.12, 0.06, 0.06), (0, 0.08, 0.32), 0.015)
+	for x in (-0.52, -0.36, 0.36, 0.52):
+		add_box(bm, (0.05, 0.05, 0.36), (x, 0.08, 0.2), 0.012)
+		add_spike(bm, (x, 0.08, 0.38), (0, 0, 1), 0.15, 0.045, sides=4)
 		for side in (-1, 1):
-			add_sweep(bm, [(x, 0.31), (x + side * 0.06, 0.36), (x + side * 0.05, 0.42)], [0.014, 0.012, 0.0], sides=4)
-	bottom = -0.03 - 0.72
-	add_box(bm, (0.2, 0.2, 0.04), (0, 0, bottom - 0.02), 0.01)
-	add_box(bm, (0.2, 0.2, 0.04), (0, 0, bottom - 0.26), 0.01)
-	for x in (-0.085, 0.085):
-		for y in (-0.085, 0.085):
-			add_box(bm, (0.025, 0.025, 0.24), (x, y, bottom - 0.14), 0.006)
-	add_lathe(bm, [(0.14, bottom - 0.28), (0, bottom - 0.4)], 4, Matrix.Rotation(math.radians(45), 4, "Z"))
+			add_sweep(bm, [(x, 0.08, 0.34), (x + side * 0.06, 0.08, 0.39), (x + side * 0.05, 0.08, 0.45)], [0.013, 0.011, 0.0], sides=4)
+	bottom = -0.04 - 0.72
+	add_box(bm, (0.24, 0.24, 0.05), (0, 0, bottom - 0.02), 0.012)
+	add_box(bm, (0.24, 0.24, 0.05), (0, 0, bottom - 0.32), 0.012)
+	for x in (-0.1, 0.1):
+		for y in (-0.1, 0.1):
+			add_box(bm, (0.03, 0.03, 0.3), (x, y, bottom - 0.17), 0.006)
+	add_lathe(bm, [(0.17, bottom - 0.34), (0, bottom - 0.47)], 4, Matrix.Rotation(math.radians(45), 4, "Z"))
+	add_torus(bm, 0.05, 0.016, 10, 4, Matrix.Translation((0, 0, bottom - 0.52)))
 	part(bm, "IronBlack")
 
 	bm = bmesh.new()
-	add_lathe(bm, [(0, bottom - 0.2), (0.05, bottom - 0.17), (0.05, bottom - 0.09), (0, bottom - 0.06)], 6)
+	add_lathe(bm, [(0, bottom - 0.28), (0.07, bottom - 0.24), (0.07, bottom - 0.12), (0, bottom - 0.06)], 6)
 	part(bm, "PumpkinGlow", CRYSTAL_SMOOTH_ANGLE)
 
+	hand = Vector((0.24, -0.16, 0.2))
 	bm = bmesh.new()
-	add_grip(bm, -0.03, 0.72, 0.064, 0.077, 7)
+	add_ball(bm, hand, 0.05, (1.1, 0.7, 1.2))
+	for index, x in enumerate((-0.035, -0.012, 0.012, 0.035)):
+		reach = 0.11 + (0.02 if index in (1, 2) else 0)
+		add_sweep(bm, [hand + Vector((x, 0, 0.03)), hand + Vector((x * 1.3, -0.01, reach * 0.65)), hand + Vector((x * 1.4, -0.05, reach))], [0.013, 0.011, 0.009], sides=4, smoothness=2)
+	add_sweep(bm, [hand + Vector((0.04, 0, 0)), hand + Vector((0.08, -0.02, 0.04)), hand + Vector((0.09, -0.05, 0.08))], [0.013, 0.011, 0.009], sides=4, smoothness=2)
+	bmesh.ops.transform(bm, matrix=Matrix.Translation(hand) @ Matrix.Scale(1.6, 4) @ Matrix.Translation(-hand), verts=bm.verts)
+	part(bm, "Bone")
+
+	bm = bmesh.new()
+	add_grip(bm, -0.04, 0.72, 0.064, 0.077, 7)
 	part(bm, "DarkLeather")
 
 	letters = glyph_strokes([LETTER_R, LETTER_I, LETTER_P], [(-0.16, top - 0.25), (0, top - 0.25), (0.15, top - 0.25)], 0.055)
 	cross = [[(0, top - 0.95), (0, top - 0.5)], [(-0.12, top - 0.62), (0.12, top - 0.62)]]
-	cracks = [[(0.14, blade_base + 0.55), (0.08, blade_base + 0.5), (0.12, blade_base + 0.42), (0.05, blade_base + 0.35)], [(-0.15, top - 1.15), (-0.08, top - 1.2), (-0.12, top - 1.3)]]
+	cracks = [[(0.14, blade_base + 0.65), (0.08, blade_base + 0.6), (0.12, blade_base + 0.52), (0.05, blade_base + 0.45)], [(-0.15, top - 1.15), (-0.08, top - 1.2), (-0.12, top - 1.3)]]
 	return {
 		"blade": "GraveStone",
 		"decals": letters + cross + cracks,
@@ -2347,9 +2442,11 @@ def build_tombstone_sword(part):
 		"decal_colors": ("33353F", "E2E6F0"),
 		"effects": {
 			"GraveStone": {
-				"gradient": (0.2, 2.5, [(0, "6E727E"), (1, "A8ACB8")]),
-				"patterns": [("nebula", "5E9A45", 2.5, 0.6), ("cells", "4A4C58", 3, 0.25)],
+				"gradient": (0.2, 2.4, [(0, "6A6E7A"), (1, "AEB2BE")]),
+				"patterns": [("nebula", "5E9A45", 2.5, 0.45), ("cells", "4A4C58", 3, 0.25)],
 			},
+			"Moss": {"patterns": [("nebula", "9AD86A", 5, 0.5)]},
+			"Dirt": {"patterns": [("cells", "4A3020", 6, 0.4), ("stars", "A87A52", 12, 0.6)]},
 		},
 	}
 
@@ -2471,52 +2568,65 @@ def build_bat_wing_sword(part):
 #// Halloween 06 Spider Sword (Rare)
 
 def build_spider_sword(part):
-	blade_base = 0.22
-	length = 2.8
-	top = blade_base + length
-	outline, plateau = profile_shape(
-		[(0, blade_base), (0, top)],
-		[(0, 0.2), (0.1, 0.25), (0.6, 0.23), (0.85, 0.17), (1, 0)],
-		chamfer=0.1,
-		features=[(t, side, 0.12, -0.08, 0.7) for t, side in ((0.45, 1), (0.55, -1), (0.7, 1), (0.78, -1))],
-	)
+	blade_base = 0.42
+	spine = [(0, blade_base), (0, blade_base + 2.0), (0.06, blade_base + 2.65), (0.2, blade_base + 3.0)]
+	stations = [(0, 0.17), (0.08, 0.24), (0.3, 0.21), (0.33, 0.16), (0.36, 0.22), (0.62, 0.2), (0.65, 0.15), (0.68, 0.19), (0.88, 0.14), (1, 0)]
+	spurs = [(t, side, 0.08, -0.09, 0.8) for t in (0.34, 0.66) for side in (-1, 1)]
+	outline, plateau = profile_shape(spine, stations, chamfer=0.09, features=spurs)
 	bm = bmesh.new()
 	add_plate(bm, outline, plateau)
 	part(bm, "SpiderBlade")
 
-	body = Vector((0, -0.12, 0.12))
+	abdomen = Vector((0, 0, 0.02))
+	thorax = Vector((0, 0, 0.3))
 	bm = bmesh.new()
-	add_ball(bm, body + Vector((0, 0.04, -0.05)), 0.17, (1, 0.85, 1.15))
-	add_ball(bm, body + Vector((0, -0.04, 0.17)), 0.1, (1, 0.9, 0.9))
+	add_ball(bm, abdomen, 0.2, (1, 0.85, 1.2))
+	add_ball(bm, thorax, 0.13, (1.05, 0.9, 1))
+	legs = [
+		((0.08, 0.36), (0.3, 0.62), (0.27, 0.98)),
+		((0.1, 0.32), (0.42, 0.48), (0.62, 0.62)),
+		((0.1, 0.27), (0.42, 0.26), (0.64, 0.1)),
+		((0.08, 0.22), (0.34, 0.08), (0.46, -0.24)),
+	]
 	for side in (-1, 1):
-		for index in range(4):
-			lift = 0.14 - index * 0.08
-			knee = body + Vector((side * 0.34, -0.02, lift + 0.18))
-			foot = body + Vector((side * (0.56 - index * 0.03), 0.02, lift - 0.08))
-			add_sweep(bm, [body + Vector((side * 0.08, 0, lift)), knee, foot], [0.022, 0.018, 0.0], sides=5)
-	add_grip(bm, -0.03, 0.75, 0.064, 0.077, 7)
+		for root, knee, tip in legs:
+			add_sweep(bm, [(side * root[0], 0, root[1]), (side * knee[0], 0, knee[1]), (side * tip[0], 0, tip[1])], [0.03, 0.026, 0.0], sides=5)
+			add_ball(bm, (side * knee[0], 0, knee[1]), 0.04)
+	add_grip(bm, -0.2, 0.75, 0.064, 0.077, 7)
+	hanger = Vector((0.46, 0, -0.84))
+	add_ball(bm, hanger, 0.055, (1, 0.9, 1.15))
+	add_ball(bm, hanger + Vector((0, 0, 0.07)), 0.035)
+	for side in (-1, 1):
+		for lift in (0.06, 0.0, -0.06):
+			add_sweep(bm, [hanger + Vector((side * 0.03, 0, lift)), hanger + Vector((side * 0.1, 0, lift + 0.05)), hanger + Vector((side * 0.13, 0, lift - 0.03))], [0.012, 0.01, 0.0], sides=4)
 	part(bm, "SpiderBody")
 
 	bm = bmesh.new()
-	hourglass = [Vector((-0.06, 0.07)), Vector((0.06, 0.07)), Vector((0.0, 0.0)), Vector((0.06, -0.07)), Vector((-0.06, -0.07)), Vector((0.0, 0.0))]
-	upper = [Vector((-0.06, 0.07)), Vector((0.06, 0.07)), Vector((0.0, 0.005))]
-	lower = [Vector((0.0, -0.005)), Vector((0.06, -0.07)), Vector((-0.06, -0.07))]
+	upper = [Vector((-0.08, 0.1)), Vector((0.08, 0.1)), Vector((0.0, 0.008))]
+	lower = [Vector((0.0, -0.008)), Vector((0.08, -0.1)), Vector((-0.08, -0.1))]
 	for shape in (upper, lower):
-		add_plate(bm, shape, None, 0.012, matrix=Matrix.Translation(body + Vector((0, -0.14, -0.06))))
-	for side in (-1, 1):
-		for offset in (0.02, 0.05):
-			add_ball(bm, body + Vector((side * offset, -0.13, 0.22 - offset * 0.4)), 0.016)
+		add_plate(bm, shape, None, 0.115, matrix=Matrix.Translation((0, 0, blade_base + 1.3)))
+		add_plate(bm, [point * 0.75 for point in shape], None, 0.172, matrix=Matrix.Translation(abdomen))
 	part(bm, "Hourglass")
 
-	bottom = -0.03 - 0.75
 	bm = bmesh.new()
-	add_ball(bm, (0, 0, bottom - 0.15), 0.15, (0.9, 0.9, 1.15))
-	for index in range(5):
-		angle = math.tau * index / 5
-		add_sweep(bm, [(math.cos(angle) * 0.13, math.sin(angle) * 0.13, bottom - 0.3), (math.cos(angle) * 0.15, math.sin(angle) * 0.15, bottom - 0.15), (math.cos(angle + 0.8) * 0.13, math.sin(angle + 0.8) * 0.13, bottom - 0.02)], [0.008, 0.008, 0.008], sides=4)
+	for y in (-0.105, 0.105):
+		for x, z, radius in ((0.04, 0.35, 0.034), (0.085, 0.32, 0.024), (0.07, 0.39, 0.022), (0.022, 0.405, 0.019)):
+			for side in (-1, 1):
+				add_ball(bm, (side * x, y, z), radius)
+	add_ball(bm, hanger + Vector((0, 0, 0.075)), 0.02, (1.8, 2.2, 1))
+	part(bm, "SpiderEye")
+
+	bottom = -0.2 - 0.75
+	sac = Vector((0, 0, bottom - 0.15))
+	bm = bmesh.new()
+	add_ball(bm, sac, 0.15, (0.9, 0.9, 1.15))
+	wrap = [sac + Vector((math.cos(angle) * 0.145, math.sin(angle) * 0.145, 0.12 - 0.24 * angle / (math.tau * 2))) for angle in numpy.linspace(0, math.tau * 2, 13)]
+	add_sweep(bm, wrap, [0.008] * 13, sides=4, smoothness=2)
+	add_sweep(bm, [(0.46, 0, -0.24), (0.46, 0, -0.5), (0.46, 0, -0.75)], [0.006, 0.006, 0.006], sides=4)
 	part(bm, "Web")
 
-	webs = web_strokes((0, top - 0.75), 0.24, spokes=8, rings=3) + web_strokes((-0.05, blade_base + 0.9), 0.2, spokes=6, rings=2, start=0.2)
+	webs = web_strokes((0, blade_base + 2.3), 0.22, spokes=8, rings=3) + web_strokes((-0.21, blade_base + 0.06), 0.4, spokes=4, rings=3, start=0, sweep=math.pi / 2)
 	return {
 		"blade": "SpiderBlade",
 		"outline": outline,
@@ -2524,7 +2634,10 @@ def build_spider_sword(part):
 		"decals": webs,
 		"decal_width": 0.008,
 		"decal_colors": ("ECECF6", "FFFFFF"),
-		"effects": {"SpiderBlade": {"gradient": (0.2, 3.0, [(0, "141218"), (1, "3A3448")])}},
+		"effects": {
+			"SpiderBlade": {"gradient": (0.4, 3.4, [(0, "141218"), (1, "3A3448")]), "patterns": [("cells", "4A2A3A", 3, 0.4)]},
+			"SpiderBody": {"patterns": [("stars", "6A5A80", 14, 0.6)]},
+		},
 	}
 
 
@@ -2591,53 +2704,71 @@ def build_witch_cauldron_blade(part):
 #// Halloween 08 Reaper Scythe (Epic)
 
 def build_reaper_scythe(part):
-	head = Vector((0, 0, 2.15))
-	spine = [(0.05, 2.18), (0.35, 2.32), (0.85, 2.3), (1.3, 2.05), (1.55, 1.68)]
-	stations = [(0, 0.12, 0.2), (0.3, 0.1, 0.22), (0.7, 0.07, 0.15), (1, 0, 0)]
-	outline, plateau = profile_shape(spine, stations, chamfer=0.07)
+	head = Vector((0, 0, 2.36))
+	spine = [(0.02, 2.36), (0.5, 2.48), (1.0, 2.49), (1.45, 2.36), (1.78, 2.07), (1.9, 1.73), (1.8, 1.45)]
+	stations = [(0, 0.09, 0.2), (0.2, 0.09, 0.26), (0.5, 0.08, 0.22), (0.78, 0.06, 0.13), (1, 0, 0)]
+	back_spikes = [(t, -1, 0.11, -0.08, 0.7) for t in (0.28, 0.42, 0.56)]
+	outline, plateau = profile_shape(spine, stations, chamfer=0.07, features=back_spikes)
 	bm = bmesh.new()
 	add_plate(bm, outline, plateau, 0.018, 0.08)
-	add_spike(bm, (-0.05, 0, 2.2), (-1, 0, 0.5), 0.35, 0.06, sides=4)
-	add_lathe(bm, [(0.06, -0.95), (0, -1.1)], 8)
+	add_spike(bm, head + Vector((-0.08, 0, 0.02)), (-1, 0, 0.3), 0.42, 0.07, sides=4)
+	for height in (2.12, 1.98):
+		add_lathe(bm, [(0.085, height - 0.035), (0.1, height - 0.015), (0.1, height + 0.015), (0.085, height + 0.035)], 8)
+	add_torus(bm, 0.085, 0.026, 10, 5, Matrix.Translation((-0.02, 0, 1.08)) @ Matrix.Rotation(math.radians(90), 4, "Z"))
+	add_lathe(bm, [(0.075, -0.95), (0, -1.18)], 8)
 	part(bm, "ReaperSteel")
 
-	rim, rim_plateau = profile_shape(spine, [(t, left + 0.03, right + 0.05) for t, left, right in stations], chamfer=0.03, plateau_ratio=0.5)
+	rim, rim_plateau = profile_shape(spine, [(t, left + 0.012, right + 0.045) for t, left, right in stations], chamfer=0.03, plateau_ratio=0.5)
 	bm = bmesh.new()
 	add_plate(bm, rim, rim_plateau, 0.006, 0.014)
 	for side in (-1, 1):
-		add_ball(bm, head + Vector((side * 0.055, -0.13, 0.04)), 0.03)
+		add_ball(bm, head + Vector((side * 0.075, -0.17, 0.04)), 0.036)
 	part(bm, "ReaperGlow")
 
 	bm = bmesh.new()
-	add_lathe(bm, [(0.065, -0.95), (0.07, 0.0), (0.065, 2.0), (0.06, 2.1)], 8)
-	add_grip(bm, 0.0, 0.8, 0.07, 0.08, 7)
+	add_lathe(bm, [(0.065, -0.95), (0.07, 0.0), (0.065, 2.0), (0.06, 2.25)], 8)
+	add_sweep(bm, [(-0.02, 0, 1.1), (-0.2, -0.02, 1.06), (-0.3, -0.04, 0.98)], [0.04, 0.038, 0.034], sides=6)
+	add_ball(bm, (-0.31, -0.04, 0.97), 0.06)
 	part(bm, "ReaperWood")
 
 	bm = bmesh.new()
-	add_ball(bm, head, 0.16, (1, 0.95, 1.05))
-	add_ball(bm, head + Vector((0, -0.04, -0.12)), 0.1, (0.85, 0.8, 0.55))
+	add_grip(bm, -0.06, 0.85, 0.07, 0.08, 7)
+	part(bm, "DarkLeather")
+
+	bm = bmesh.new()
+	add_ball(bm, head, 0.21, (1, 0.95, 1.05))
+	add_ball(bm, head + Vector((0, -0.05, -0.16)), 0.125, (0.85, 0.8, 0.55))
 	part(bm, "Bone")
 
 	bm = bmesh.new()
 	for side in (-1, 1):
-		add_ball(bm, head + Vector((side * 0.055, -0.115, 0.04)), 0.045, (1, 0.5, 1.15))
-	add_ball(bm, head + Vector((0, -0.14, -0.04)), 0.022, (1, 0.5, 1))
+		add_ball(bm, head + Vector((side * 0.075, -0.155, 0.04)), 0.058, (1, 0.5, 1.15))
+	add_ball(bm, head + Vector((0, -0.19, -0.05)), 0.027, (1, 0.5, 1))
+	for x in (-0.05, 0.0, 0.05):
+		add_box(bm, (0.014, 0.03, 0.05), head + Vector((x, -0.145, -0.16)), 0.004)
 	part(bm, "Socket")
 
 	bm = bmesh.new()
 	for index, (x, length) in enumerate(((-0.1, 0.7), (0.0, 0.85), (0.1, 0.6))):
 		rag = [Vector((x - 0.06, 0)), Vector((x + 0.06, 0)), Vector((x + 0.07, -length * 0.5)), Vector((x + 0.04, -length * 0.8)), Vector((x + 0.02, -length * 0.7)), Vector((x, -length)), Vector((x - 0.03, -length * 0.75)), Vector((x - 0.07, -length * 0.85)), Vector((x - 0.06, -length * 0.4))]
-		add_plate(bm, rag, None, 0.012, matrix=Matrix.Translation((0, 0.08 + index * 0.012, 2.0)) @ Matrix.Rotation(math.radians(index * 6 - 6), 4, "Y"))
-	add_torus(bm, 0.09, 0.03, 12, 5, Matrix.Translation((0, 0, 2.0)) @ Matrix.Rotation(math.radians(90), 4, "X"))
+		add_plate(bm, rag, None, 0.012, matrix=Matrix.Translation((0, 0.08 + index * 0.012, 2.05)) @ Matrix.Rotation(math.radians(index * 6 - 6), 4, "Y"))
+	add_torus(bm, 0.09, 0.03, 12, 5, Matrix.Translation((0, 0, 2.05)) @ Matrix.Rotation(math.radians(90), 4, "X"))
 	part(bm, "Cloth")
 
+	runes = []
+	for index in range(4):
+		center = point_on_path(catmull_rom(spine, 8) + [Vector(spine[-1])], 0.16 + index * 0.17)
+		runes.append([center + Vector((0, -0.09)) + Vector(point) * 0.05 for point in VOID_RUNES[(index * 2) % len(VOID_RUNES)]])
 	return {
 		"blade": "ReaperSteel",
 		"outline": outline,
 		"edge_glow": ("C08AFF", 0.05),
+		"decals": runes,
+		"decal_width": 0.014,
+		"decal_colors": ("C08AFF", "F0E0FF"),
 		"effects": {
-			"ReaperSteel": {"gradient": (1.6, 2.4, [(0, "3A3E4C"), (1, "8A92A8")]), "patterns": [("nebula", "6A4A9A", 3, 0.3)]},
-			"Cloth": {"gradient": (1.1, 2.0, [(0, "1A1424"), (1, "4A3E5E")])},
+			"ReaperSteel": {"gradient": (1.6, 2.6, [(0, "2E3240"), (1, "8A92A8")]), "patterns": [("nebula", "6A4A9A", 3, 0.35)]},
+			"Cloth": {"gradient": (1.1, 2.1, [(0, "1A1424"), (1, "4A3E5E")])},
 		},
 	}
 
@@ -2645,8 +2776,9 @@ def build_reaper_scythe(part):
 #// Halloween 09 Ghost Sword (Legendary)
 
 def build_ghost_sword(part):
-	spine = [(0, 0.28), (0, 1.3), (0.12, 2.2), (-0.05, 2.9), (0.15, 3.35)]
-	stations = [(0, 0.22), (0.1, 0.28), (0.5, 0.3), (0.75, 0.24), (0.9, 0.14), (1, 0)]
+	blade_base = 0.42
+	spine = [(0, blade_base), (0, 1.4), (0.08, 2.2), (-0.04, 2.9), (0.08, 3.35), (0.26, 3.62)]
+	stations = [(0, 0.12), (0.1, 0.24), (0.5, 0.3), (0.75, 0.25), (0.9, 0.15), (1, 0)]
 	outline, plateau = profile_shape(spine, stations, chamfer=0.11)
 	bm = bmesh.new()
 	add_plate(bm, outline, plateau)
@@ -2655,52 +2787,66 @@ def build_ghost_sword(part):
 	rim, rim_plateau = profile_shape(spine, [(t, width + 0.05) for t, width in stations], chamfer=0.03, plateau_ratio=0.5)
 	bm = bmesh.new()
 	add_plate(bm, rim, rim_plateau, 0.006, 0.016)
-	add_cabochon(bm, (0, 0, 0.12), 0.09, 0.17)
-	bottom = -0.04 - 0.78
+	bottom = -0.22 - 0.75
 	wisp = [(0, 0, bottom - 0.02), (0.1, 0, bottom - 0.15), (-0.05, 0, bottom - 0.3), (0.06, 0, bottom - 0.42)]
 	add_sweep(bm, wisp, [0.06, 0.05, 0.03, 0.0], sides=6)
 	part(bm, "GhostGlow")
 
+	ghost_center = Vector((0, 0, 0.22))
+	body = ghost_outline(0.34, 0.52, waves=3)
 	bm = bmesh.new()
-	for location, size, tilt in (((-0.72, 0, 1.35), 0.15, 12), ((0.75, 0, 2.15), 0.13, -10), ((-0.6, 0, 2.85), 0.11, 15)):
-		ghost = ghost_outline(size, size * 1.6)
-		add_plate(bm, ghost, [point * 0.6 for point in ghost], 0.03, 0.06, Matrix.Translation(location) @ Matrix.Rotation(math.radians(tilt), 4, "Y"))
-	part(bm, "Ghost")
+	add_plate(bm, body, [point * 0.65 for point in body], 0.05, 0.15, Matrix.Translation(ghost_center))
+	for side in (-1, 1):
+		add_sweep(bm, [(side * 0.28, 0.2), (side * 0.43, 0.3), (side * 0.5, 0.45)], [0.05, 0.045, 0.04])
+		add_ball(bm, (side * 0.51, 0, 0.49), 0.065)
+	part(bm, "Spirit")
 
 	bm = bmesh.new()
-	for location, size, tilt in (((-0.72, 0, 1.35), 0.15, 12), ((0.75, 0, 2.15), 0.13, -10), ((-0.6, 0, 2.85), 0.11, 15)):
-		rotation = Matrix.Rotation(math.radians(tilt), 3, "Y")
+	for y in (-0.155, 0.155):
 		for side in (-1, 1):
-			for y in (-0.065, 0.065):
-				add_ball(bm, Vector(location) + rotation @ Vector((side * size * 0.32, y, size * 0.15)), size * 0.13, (1, 0.5, 1.4))
-			add_ball(bm, Vector(location) + rotation @ Vector((0, side * 0.065, -size * 0.3)), size * 0.12, (1, 0.5, 1.2))
-	part(bm, "Socket")
+			add_ball(bm, ghost_center + Vector((side * 0.1, y, 0.08)), 0.055, (1, 0.5, 1.35))
+		add_ball(bm, ghost_center + Vector((0, y, -0.07)), 0.045, (1, 0.5, 1.2))
+	part(bm, "GhostEye")
 
 	bm = bmesh.new()
-	for index in range(-4, 5):
-		if index == 0:
-			continue
-		rotation = Matrix.Rotation(math.radians(90 if index % 2 else 0), 4, "X")
-		add_torus(bm, 0.055, 0.016, 10, 5, Matrix.Translation((index * 0.085, 0, 0.12 - abs(index) * 0.012)) @ rotation)
-	add_torus(bm, 0.14, 0.035, 16, 6, Matrix.Translation((0, 0, 0.12)))
-	add_pommel(bm, [(0.06, -0.06), (0.095, -0.04), (0.095, -0.01), (0.06, 0.0)])
-	add_grip(bm, -0.04, 0.78, 0.064, 0.077, 7)
+	for y in (-0.175, 0.175):
+		for side in (-1, 1):
+			add_ball(bm, ghost_center + Vector((side * 0.1 - 0.018, y, 0.12)), 0.018, (1, 0.6, 1))
+	part(bm, "Spirit")
+
+	bm = bmesh.new()
+	for y in (-0.14, 0.14):
+		for side in (-1, 1):
+			add_ball(bm, ghost_center + Vector((side * 0.19, y, -0.02)), 0.04, (1.3, 0.4, 0.8))
+	part(bm, "Blush")
+
+	bm = bmesh.new()
+	for side in (-1, 1):
+		for index in range(3):
+			rotation = Matrix.Rotation(math.radians(90 if index % 2 else 0), 4, "Z")
+			add_torus(bm, 0.045, 0.015, 10, 5, Matrix.Translation((side * 0.51, 0, 0.4 - index * 0.085)) @ rotation)
+		add_ball(bm, (side * 0.51, 0, 0.1), 0.07)
+	add_pommel(bm, [(0.06, bottom - 0.02), (0.095, bottom + 0.0), (0.095, bottom + 0.03), (0.06, bottom + 0.05)])
+	add_grip(bm, -0.22, 0.75, 0.064, 0.077, 7)
 	part(bm, "Chain")
 
-	face = [
-		[(-0.12, 2.68), (-0.08, 2.74), (-0.04, 2.68), (-0.08, 2.6), (-0.12, 2.68)],
-		[(0.03, 2.68), (0.07, 2.74), (0.11, 2.68), (0.07, 2.6), (0.03, 2.68)],
-		[(-0.04, 2.48), (0.0, 2.52), (0.04, 2.48), (0.0, 2.42), (-0.04, 2.48)],
-	]
+	tiny = []
+	for center, size in (((-0.04, 1.45), 0.1), ((0.1, 2.35), 0.085), ((-0.06, 3.0), 0.07)):
+		loop = [Vector(center) + point for point in ghost_outline(size, size * 1.5, waves=2)]
+		tiny.append(loop + [loop[0]])
+		for side in (-1, 1):
+			eye = Vector(center) + Vector((side * size * 0.35, size * 0.05))
+			tiny.append([eye, eye + Vector((0, size * 0.25))])
 	return {
 		"blade": "Ghost",
 		"outline": outline,
 		"edge_glow": ("8AF0FF", 0.07),
-		"decals": face,
-		"decal_width": 0.03,
-		"decal_colors": ("22304A", "6A8AB0"),
+		"decals": tiny,
+		"decal_width": 0.016,
+		"decal_colors": ("5A7AA8", "FFFFFF"),
 		"effects": {
-			"Ghost": {"gradient": (0.2, 3.4, [(0, "8ACAE8"), (0.6, "D8F0FF"), (1, "FFFFFF")]), "patterns": [("nebula", "FFFFFF", 2.5, 0.4), ("stars", "FFFFFF", 9, 0.6)]},
+			"Ghost": {"gradient": (0.4, 3.6, [(0, "8ACAE8"), (0.6, "D8F0FF"), (1, "FFFFFF")]), "patterns": [("nebula", "FFFFFF", 2.5, 0.4), ("stars", "FFFFFF", 9, 0.6)]},
+			"Spirit": {"gradient": (-0.3, 0.6, [(0, "B8D8F0"), (1, "FFFFFF")])},
 		},
 	}
 
@@ -2778,52 +2924,75 @@ def build_vampire_sword(part):
 #// Halloween 11 Headless Horseman Blade (Mythic)
 
 def build_headless_horseman_blade(part):
-	blade_base = 0.46
-	spine = [(0, blade_base), (0, blade_base + 3.1)]
-	stations = [(0, 0.22), (0.08, 0.28), (0.55, 0.27), (0.82, 0.24), (0.92, 0.15), (1, 0)]
-	teeth = [(t, side, 0.14, -0.1, 0.6) for t, side in ((0.5, 1), (0.58, -1), (0.66, 1), (0.74, -1), (0.82, 1))]
-	outline, plateau = profile_shape(spine, stations, chamfer=0.11, features=teeth)
+	blade_base = 0.5
+	spine = [(0, blade_base), (0.02, 1.5), (0.16, 2.5), (0.42, 3.3), (0.6, 3.62)]
+	stations = [(0, 0.2), (0.08, 0.25), (0.7, 0.24), (0.88, 0.2, 0.15), (1, 0, 0)]
+	licks = [(t, 1, 0.2, -0.1, 0.9) for t in (0.3, 0.44, 0.58, 0.72)]
+	outline, plateau = profile_shape(spine, stations, chamfer=0.1, features=licks)
 	bm = bmesh.new()
 	add_plate(bm, outline, plateau)
 	part(bm, "Horseman")
 
-	rim, rim_plateau = profile_shape(spine, [(t, width + 0.05) for t, width in stations], chamfer=0.03, plateau_ratio=0.5)
-	pumpkin_center = (0, 0, 0.2)
+	pumpkin_center = (0, 0, 0.24)
+	rim, rim_plateau = profile_shape(spine, [station[:1] + tuple(width + 0.035 for width in station[1:]) for station in stations], chamfer=0.03, plateau_ratio=0.5)
 	bm = bmesh.new()
 	add_plate(bm, rim, rim_plateau, 0.006, 0.016)
-	add_pumpkin_face(bm, pumpkin_center, 0.3)
+	add_pumpkin_face(bm, pumpkin_center, 0.32)
 	for side in (-1, 1):
-		add_flame(bm, Vector((side * 0.2, 0.35)), (side * 0.35, 1), 0.55, 0.11, side)
-		add_flame(bm, Vector((side * 0.3, 0.25)), (side * 0.8, 1), 0.4, 0.08, side)
-		add_flame(bm, Vector((side * 0.12, 0.42)), (side * 0.1, 1), 0.65, 0.09, -side)
-	bottom = -0.1 - 0.78
-	add_flame(bm, Vector((0, bottom - 0.12)), (0, -1), 0.3, 0.07)
+		add_flame(bm, Vector((side * 0.18, 0.46)), (side * 0.35, 1), 0.6, 0.11, side)
+		add_flame(bm, Vector((side * 0.28, 0.36)), (side * 0.8, 1), 0.42, 0.08, side)
+		add_flame(bm, Vector((side * 0.1, 0.5)), (side * 0.1, 1), 0.7, 0.09, -side)
+	bottom = -0.06 - 0.82
+	add_flame(bm, Vector((0, bottom - 0.33)), (0, 1), 0.2, 0.06)
 	part(bm, "HellFire")
 
 	bm = bmesh.new()
-	add_pumpkin(bm, pumpkin_center, 0.3)
+	add_pumpkin(bm, pumpkin_center, 0.32)
 	part(bm, "Pumpkin")
 
 	bm = bmesh.new()
-	add_sweep(bm, [(0, 0.48), (0.05, 0.56), (0.12, 0.58)], [0.045, 0.04, 0.035])
-	part(bm, "Vine")
-
-	bm = bmesh.new()
-	for side in (-1, 1):
-		shoe = [(side * 0.2, 0.0), (side * 0.48, -0.02), (side * 0.6, 0.12), (side * 0.56, 0.28), (side * 0.46, 0.32)]
-		add_sweep(bm, shoe, [0.05, 0.045, 0.04, 0.035, 0.0])
-	add_pommel(bm, [(0.06, -0.12), (0.1, -0.1), (0.1, -0.06), (0.06, -0.05)])
-	add_pommel(bm, [(0.05, bottom + 0.01), (0.1, bottom - 0.03), (0.1, bottom - 0.08), (0.06, bottom - 0.11)])
-	add_grip(bm, -0.1, 0.78, 0.064, 0.077, 7)
+	knuckle_bow = [(0.24, 0.12), (0.42, -0.12), (0.42, -0.52), (0.26, -0.84), (0.06, -0.95)]
+	add_sweep(bm, knuckle_bow, [0.045, 0.04, 0.035, 0.035, 0.04])
+	add_sweep(bm, [(-0.26, 0.14), (-0.44, 0.06), (-0.52, 0.16), (-0.47, 0.26), (-0.41, 0.22)], [0.045, 0.04, 0.032, 0.022, 0.0])
+	add_pommel(bm, [(0.06, -0.1), (0.1, -0.08), (0.1, -0.03), (0.06, -0.01)])
+	add_pommel(bm, [(0.05, bottom + 0.01), (0.1, bottom - 0.02), (0.1, bottom - 0.06), (0.05, bottom - 0.08)])
+	shoe = [(math.cos(angle) * 0.15, bottom - 0.24 + math.sin(angle) * 0.17) for angle in numpy.linspace(math.radians(-35), math.radians(215), 9)]
+	add_sweep(bm, shoe, [0.038] * 9, sides=4, smoothness=3)
 	part(bm, "IronBlack")
 
+	bm = bmesh.new()
+	for angle in numpy.linspace(math.radians(10), math.radians(170), 5):
+		if abs(angle - math.pi / 2) > 0.2:
+			for y in (-0.055, 0.055):
+				add_ball(bm, (math.cos(angle) * 0.15, y, bottom - 0.24 + math.sin(angle) * 0.17), 0.016)
+	part(bm, "Gold")
+
+	bm = bmesh.new()
+	add_grip(bm, -0.06, 0.82, 0.064, 0.077, 7)
+	part(bm, "DarkLeather")
+
+	bm = bmesh.new()
+	for index, (length, tilt) in enumerate(((0.75, 28), (0.6, 40))):
+		rag = [Vector((-0.06, 0)), Vector((0.06, 0)), Vector((0.08, -length * 0.5)), Vector((0.05, -length * 0.85)), Vector((0.02, -length * 0.72)), Vector((0, -length)), Vector((-0.03, -length * 0.78)), Vector((-0.08, -length * 0.88)), Vector((-0.07, -length * 0.4))]
+		add_plate(bm, rag, None, 0.014, matrix=Matrix.Translation((-0.2, 0.1 + index * 0.02, 0.02)) @ Matrix.Rotation(math.radians(-tilt), 4, "Y"))
+	part(bm, "Cape")
+
+	cracks = [
+		[(0.0, blade_base + 0.1), (0.05, blade_base + 0.45), (-0.03, blade_base + 0.85), (0.03, blade_base + 1.25)],
+		[(0.05, blade_base + 0.45), (0.13, blade_base + 0.65)],
+		[(-0.03, blade_base + 0.85), (-0.12, blade_base + 1.05)],
+	]
 	return {
 		"blade": "Horseman",
 		"outline": outline,
-		"edge_glow": ("FF8A2E", 0.07),
+		"edge_glow": ("FF8A2E", 0.06),
+		"decals": cracks,
+		"decal_width": 0.02,
+		"decal_colors": ("FF7A1F", "FFE08A"),
 		"effects": {
-			"Horseman": {"gradient": (0.4, 3.6, [(0, "120C10"), (1, "3A2A34")]), "patterns": [("cells", "FF7A1F", 2.6, 0.7), ("flames", "FFB347", 4, 0.25)]},
+			"Horseman": {"gradient": (0.5, 3.7, [(0, "5A2414"), (0.3, "241A20"), (1, "2E2636")]), "patterns": [("flames", "FF7A1F", 3.5, 0.5)]},
 			"HellFire": {"gradient": (0.0, 1.2, [(0, "FF5A1A"), (1, "FFE07A")])},
+			"Cape": {"gradient": (-0.6, 0.0, [(0, "2A0A10"), (1, "6A1E2A")])},
 		},
 	}
 
@@ -2831,82 +3000,70 @@ def build_headless_horseman_blade(part):
 #// Halloween 12 Nightmare King Blade (Exclusive)
 
 def build_nightmare_king_blade(part):
-	blade_base = 0.62
-	spine = [(0, blade_base), (0, blade_base + 2.0), (0.1, blade_base + 3.2), (0.35, blade_base + 4.1)]
-	stations = [(0, 0.3), (0.06, 0.38), (0.3, 0.34), (0.55, 0.42), (0.72, 0.36), (0.84, 0.48), (0.93, 0.34), (1, 0)]
-	teeth = [(t, side, 0.18, -0.15, 0.7) for t, side in ((0.22, 1), (0.26, -1), (0.45, 1), (0.49, -1), (0.66, 1), (0.7, -1), (0.86, 1), (0.88, -1))]
-	outline, plateau = profile_shape(spine, stations, chamfer=0.13, features=teeth)
+	blade_base = 0.66
+	spine = [(0, blade_base), (0, blade_base + 2.2), (0.06, blade_base + 3.3), (0.22, blade_base + 4.0)]
+	stations = [(0, 0.3), (0.06, 0.4), (0.5, 0.46), (0.78, 0.4), (0.9, 0.28), (1, 0)]
+	features = []
+	for side in (-1, 1):
+		features += [(t, side, 0.5, 0.08, 0) for t in (0.3, 0.5, 0.7)]
+		features += [(t, side, 0.1, -0.1, 0.8) for t in (0.2, 0.4, 0.6, 0.8)]
+	outline, plateau = profile_shape(spine, stations, chamfer=0.13, features=features)
 	bm = bmesh.new()
 	add_plate(bm, outline, plateau, 0.022, 0.12)
 	part(bm, "NightmareBlade")
 
-	pumpkin_center = (0, 0, 0.3)
+	pumpkin_center = Vector((0, 0, 0.34))
 	rim, rim_plateau = profile_shape(spine, [(t, width + 0.08) for t, width in stations], chamfer=0.04, plateau_ratio=0.5)
 	bm = bmesh.new()
 	add_plate(bm, rim, rim_plateau, 0.006, 0.016)
-	add_pumpkin_face(bm, pumpkin_center, 0.36)
+	add_pumpkin_face(bm, pumpkin_center, 0.38)
 	for side in (-1, 1):
-		add_flame(bm, Vector((side * 0.28, 0.55)), (side * 0.3, 1), 0.6, 0.12, side)
-		add_flame(bm, Vector((side * 0.36, 0.42)), (side * 0.9, 1), 0.45, 0.09, side)
-	path = catmull_rom(spine, 8) + [Vector(spine[-1])]
-	for phase in (0,):
-		helix = []
-		for step in range(14):
-			t = step / 13
-			center = point_on_path(path, 0.05 + 0.6 * t)
-			angle = t * math.tau * 1.5 + phase
-			helix.append((center.x + math.cos(angle) * 0.6, math.sin(angle) * 0.35, center.y))
-		add_sweep(bm, helix, [0.03] * 4 + [0.024] * 6 + [0.014, 0.008, 0.004, 0.0], sides=5, smoothness=3)
-	bottom = -0.1 - 0.95
-	for side in (-1, 1):
-		add_ball(bm, (side * 0.055, -0.13, bottom - 0.1), 0.03)
+		add_flame(bm, Vector((side * 0.28, 0.6)), (side * 0.3, 1), 0.62, 0.12, side)
+		add_flame(bm, Vector((side * 0.38, 0.46)), (side * 0.9, 1), 0.46, 0.09, side)
+	bottom = -0.06 - 0.95
+	pommel_center = Vector((0, 0, bottom - 0.12))
+	add_pumpkin_face(bm, pommel_center, 0.15)
 	part(bm, "SoulGlow")
 
 	bm = bmesh.new()
-	add_pumpkin(bm, pumpkin_center, 0.36, ribs=8, sides=16)
+	add_pumpkin(bm, pumpkin_center, 0.38, ribs=8, sides=16)
+	add_pumpkin(bm, pommel_center, 0.15, ribs=6, sides=12, rings=6)
 	part(bm, "Pumpkin")
 
 	bm = bmesh.new()
-	crown_base = 0.56
-	add_lathe(bm, [(0.2, crown_base), (0.22, crown_base), (0.23, crown_base + 0.08), (0.21, crown_base + 0.08)], 16, closed=True)
+	crown_base = pumpkin_center.z + 0.27
+	add_lathe(bm, [(0.21, crown_base), (0.23, crown_base), (0.24, crown_base + 0.08), (0.22, crown_base + 0.08)], 16, closed=True)
 	for index in range(5):
 		angle = math.tau * index / 5 - math.pi / 2
 		direction = Vector((math.cos(angle) * 0.25, math.sin(angle) * 0.25, 1))
-		root = Vector((math.cos(angle) * 0.22, math.sin(angle) * 0.22, crown_base + 0.06))
+		root = Vector((math.cos(angle) * 0.23, math.sin(angle) * 0.23, crown_base + 0.06))
 		add_spike(bm, root, direction, 0.2, 0.05, sides=4)
 		add_ball(bm, root + direction.normalized() * 0.21, 0.03)
-	add_pommel(bm, [(0.06, -0.12), (0.1, -0.1), (0.1, -0.06), (0.06, -0.05)])
-	add_pommel(bm, [(0.06, -0.5), (0.09, -0.48), (0.09, -0.44), (0.06, -0.42)])
-	add_pommel(bm, [(0.06, bottom + 0.03), (0.09, bottom + 0.01), (0.09, bottom - 0.02), (0.06, bottom - 0.03)])
-	moon = crescent_shape(0.3, 0.25, 0.11)
-	add_plate(bm, moon, None, 0.03, matrix=Matrix.Translation((-0.85, 0, blade_base + 3.4)))
+	for height in (-0.06, -0.5, bottom + 0.02):
+		add_pommel(bm, [(0.06, height - 0.03), (0.095, height - 0.015), (0.095, height + 0.015), (0.06, height + 0.03)])
+	add_plate(bm, crescent_shape(0.22, 0.18, 0.08), None, 0.145, matrix=Matrix.Translation((0, 0, blade_base + 2.75)))
 	part(bm, "Gold")
 
 	bm = bmesh.new()
 	for index in range(5):
 		angle = math.tau * index / 5 - math.pi / 2 + math.pi / 5
-		add_cabochon(bm, (math.cos(angle) * 0.23, math.sin(angle) * 0.23, crown_base + 0.04), 0.03, 0.02, direction=(math.cos(angle), math.sin(angle), 0))
+		add_cabochon(bm, (math.cos(angle) * 0.24, math.sin(angle) * 0.24, crown_base + 0.04), 0.03, 0.02, direction=(math.cos(angle), math.sin(angle), 0))
 	part(bm, "Ruby", CRYSTAL_SMOOTH_ANGLE)
 
 	bm = bmesh.new()
 	for side in (-1, 1):
 		wing, bones = bat_wing_outline(0.62)
-		wing_matrix = Matrix.Translation((side * 0.24, 0.1, 0.22)) @ Matrix.Diagonal((side, 1, 1, 1)) @ Matrix.Rotation(math.radians(-6), 4, "Y")
+		wing_matrix = Matrix.Translation((side * 0.26, 0.1, 0.26)) @ Matrix.Diagonal((side, 1, 1, 1)) @ Matrix.Rotation(math.radians(-6), 4, "Y")
 		add_plate(bm, wing, None, 0.025, matrix=wing_matrix)
 		for bone in bones:
 			add_sweep(bm, [(point.x, point.y) for point in bone], [0.026] * (len(bone) - 1) + [0.008], sides=4, smoothness=3, matrix=wing_matrix)
-	for location, scale, tilt in (((0.85, 0, 1.6), 0.12, 15), ((-0.8, 0, 2.5), 0.1, -12), ((0.75, 0, 3.6), 0.09, 20)):
-		wing, _ = bat_wing_outline(scale)
-		for side in (-1, 1):
-			add_plate(bm, wing, None, 0.015, matrix=Matrix.Translation(location) @ Matrix.Rotation(math.radians(tilt), 4, "Y") @ Matrix.Diagonal((side, 1, 1, 1)))
-		add_ball(bm, Vector(location) + Vector((0, 0, 0.02)), scale * 0.35, (1, 0.8, 1.2))
-	add_grip(bm, -0.1, 0.95, 0.07, 0.084, 8)
-	add_ball(bm, (0, 0, bottom - 0.12), 0.14, (1, 0.95, 1.05))
+	add_grip(bm, -0.06, 0.95, 0.07, 0.084, 8)
+	add_sweep(bm, [(0, 0, bottom - 0.02), (0.03, 0, bottom + 0.04)], [0.03, 0.025])
 	part(bm, "BatBody")
 
 	runes = []
-	for index in range(8):
-		center = Vector((0, blade_base + 0.45 + index * 0.42))
+	for index in range(6):
+		center = Vector((0, blade_base + 0.42 + index * 0.4))
 		runes.append([center + Vector(point) * 0.075 for point in VOID_RUNES[(index + 3) % len(VOID_RUNES)]])
 	return {
 		"blade": "NightmareBlade",
@@ -2918,7 +3075,7 @@ def build_nightmare_king_blade(part):
 		"effects": {
 			"NightmareBlade": {
 				"gradient": (0.6, 4.7, [(0, "0E0818"), (0.5, "2A1A40"), (1, "5A3A8A")]),
-				"patterns": [("nebula", "3E7A5A", 2, 0.35), ("cells", "7CFF9A", 2.4, 0.35), ("stars", "FFFFFF", 10, 0.8)],
+				"patterns": [("nebula", "3E7A5A", 2, 0.35), ("cells", "7CFF9A", 2.4, 0.3), ("stars", "FFFFFF", 10, 0.8)],
 			},
 		},
 	}
