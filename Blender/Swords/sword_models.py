@@ -101,6 +101,10 @@ PALETTE = {
 	"DesertWood": ("A8723F", "4A2A12", "E3B06E"),
 	"Rope": ("D9BC7E", "7A5A2E", "F7E6B8"),
 	"Bone": ("EFE3C4", "8C7A56", "FFFFFF"),
+	"Tooth": ("FFF8E8", "A89878", "FFFFFF"),
+	"BronzeEdge": ("F7C784", "8A5A22", "FFF0D0"),
+	"Fang": ("F4EAD2", "8C7A56", "FFFFFF"),
+	"Hood": ("2E8A62", "0E3A2A", "7FD8A8"),
 	"BoneDark": ("C9B48A", "6A5634", "F2E6C6"),
 	"Socket": ("3A2A24", "140C0A", "6A5048"),
 	"Sandstone": ("E3A462", "7A4120", "FFD9A0"),
@@ -1307,149 +1311,188 @@ GLYPHS = [
 #// Desert 01 Cactus Sword (Common)
 
 def build_cactus_sword(part):
-	blade_base = 0.1
+	blade_base = 0.12
 	length = 2.1
 	outline, plateau = profile_shape(
 		[(0, blade_base), (0, blade_base + length)],
-		[(0, 0.2), (0.08, 0.24), (1, 0.24)],
+		[(0, 0.21), (0.08, 0.25), (0.85, 0.24), (1, 0.21)],
 		tip="round",
-		chamfer=0.09,
-		plateau_ratio=0.4,
+		chamfer=0.11,
+		plateau_ratio=0.35,
 	)
+	arms = ((1, 0.95, 0.52), (-1, 0.55, 0.44))
 	bm = bmesh.new()
-	add_plate(bm, outline, plateau, 0.06, 0.12)
-	for side, start, height in ((1, 0.9, 0.5), (-1, 0.55, 0.42)):
+	add_plate(bm, outline, plateau, 0.08, 0.13)
+	for side, start, height in arms:
 		root = blade_base + start
-		arm = [(side * 0.18, root), (side * 0.4, root + 0.04), (side * 0.46, root + 0.2), (side * 0.45, root + height)]
-		add_sweep(bm, arm, [0.06, 0.065, 0.065, 0.065])
-		add_ball(bm, (side * 0.45, 0, root + height), 0.094)
+		arm = [(side * 0.16, root), (side * 0.36, root + 0.02), (side * 0.47, root + 0.14), (side * 0.47, root + height)]
+		add_sweep(bm, arm, [0.06, 0.064, 0.066, 0.066], sides=8)
+		add_ball(bm, (side * 0.47, 0, root + height), 0.096)
+	for side in (-1, 1):
+		pad, pad_plateau = profile_shape([(side * 0.08, 0.06), (side * 0.32, 0.12), (side * 0.56, 0.24)], [(0, 0.08), (0.45, 0.14), (1, 0.1)], tip="round", chamfer=0.05)
+		add_plate(bm, pad, pad_plateau, 0.035, 0.065)
 	part(bm, "CactusGreen")
 
 	bm = bmesh.new()
-	for index, z in enumerate(numpy.arange(blade_base + 0.3, blade_base + length, 0.3)):
+
+	def spine_pair(location, direction):
+		direction = Vector(direction).normalized()
+		spread = Vector((0, 0, 0.35)) if abs(direction.z) < 0.7 else Vector((0.35, 0, 0))
+		for tilt in (-1, 1):
+			add_spike(bm, location, direction + spread * tilt, 0.08, 0.013, sides=4)
+
+	for index, z in enumerate(numpy.arange(blade_base + 0.3, blade_base + length, 0.28)):
 		for side in (-1, 1):
-			add_spike(bm, (side * 0.23, 0, z), (side, 0, 0.5), 0.09, 0.016, sides=4)
-			x = 0.1 * (1 if index % 2 == 0 else -1) * side
-			add_spike(bm, (x, side * 0.115, z + 0.12), (0, side, 0.4), 0.07, 0.014, sides=4)
-	for side, start, height in ((1, 0.9, 0.5), (-1, 0.55, 0.42)):
-		add_spike(bm, (side * 0.45, 0, blade_base + start + height + 0.08), (side * 0.3, 0, 1), 0.07, 0.014, sides=4)
-		add_spike(bm, (side * 0.55, 0, blade_base + start + height * 0.5), (side, 0, 0.3), 0.07, 0.014, sides=4)
+			spine_pair((side * 0.24, 0, z), (side, 0, 0.3))
+			if index % 2 == 0:
+				spine_pair((0.115 * side, side * 0.13, z + 0.14), (0, side, 0.3))
+	for side, start, height in arms:
+		root = blade_base + start
+		spine_pair((side * 0.47, 0, root + height + 0.09), (side * 0.2, 0, 1))
+		spine_pair((side * 0.57, 0, root + height * 0.55), (side, 0, 0.2))
+		spine_pair((side * 0.47, side * 0.0 - 0.09, root + height * 0.4), (0, -1, 0.2))
+	for side in (-1, 1):
+		spine_pair((side * 0.56, 0, 0.3), (side, 0, 0.6))
 	part(bm, "CactusSpine")
 
-	top = blade_base + length + 0.22
+	top = blade_base + length + 0.2
 	bm = bmesh.new()
-	for index in range(5):
-		angle = math.tau * index / 5 + math.pi / 2
-		add_ball(bm, (math.cos(angle) * 0.085, 0, top + math.sin(angle) * 0.085), 0.07, (1, 2.0, 1))
+	for index in range(6):
+		angle = math.tau * index / 6 + math.pi / 2
+		add_ball(bm, (math.cos(angle) * 0.1, 0, top + math.sin(angle) * 0.1), 0.085, (1, 2.0, 1))
+	add_ball(bm, (0.47, 0, blade_base + 0.95 + 0.52 + 0.1), 0.06, (1, 1.6, 1))
 	part(bm, "Flower")
 
 	bm = bmesh.new()
-	add_ball(bm, (0, 0, top), 0.055, (1, 2.6, 1))
+	add_ball(bm, (0, 0, top), 0.06, (1, 2.8, 1))
 	part(bm, "Gold")
 
 	bm = bmesh.new()
-	add_box(bm, (0.78, 0.26, 0.16), (0, 0, 0.05), 0.04)
-	bottom = -0.03 - 0.7
+	for height in (0.03, 0.11):
+		add_torus(bm, 0.12, 0.028, 14, 6, Matrix.Translation((0, 0, height)) @ Matrix.Rotation(math.radians(90), 4, "X"))
+	add_grip(bm, -0.04, 0.7, 0.062, 0.075, 6)
+	part(bm, "Rope")
+
+	bm = bmesh.new()
+	bottom = -0.04 - 0.7
+	add_pommel(bm, [(0.06, -0.02), (0.08, -0.04), (0.08, 0.0), (0.06, 0.02)])
 	add_pommel(bm, [(0.05, bottom + 0.01), (0.1, bottom - 0.03), (0.1, bottom - 0.09), (0.06, bottom - 0.13), (0, bottom - 0.14)])
 	part(bm, "DesertWood")
 
-	bm = bmesh.new()
-	add_grip(bm, -0.03, 0.7, 0.062, 0.075, 6)
-	part(bm, "Rope")
-
+	ribs = [[(x, blade_base + 0.2), (x, blade_base + length + 0.05)] for x in (-0.12, 0, 0.12)]
 	return {
 		"blade": "CactusGreen",
-		"decals": [[(x, blade_base + 0.25), (x, blade_base + length)] for x in (-0.11, 0, 0.11)],
-		"decal_width": 0.012,
-		"decal_colors": ("3E7A34", "9BDB6E"),
-		"effects": {"CactusGreen": {"gradient": (0.1, 2.5, [(0, "3F7F35"), (1, "86CF5E")])}},
+		"decals": ribs,
+		"decal_width": 0.016,
+		"decal_colors": ("2F6B2E", "A6E07A"),
+		"effects": {"CactusGreen": {"gradient": (0.0, 2.5, [(0, "3A7A32"), (1, "8AD460")])}},
 	}
 
 
-#// Desert 02 Bone Sword (Common)
+#// Desert 02 Jawbone Sword (Common)
 
-def build_bone_sword(part):
-	blade_base = 0.1
-	outline, plateau = profile_shape(
-		[(0, blade_base), (0, blade_base + 2.1)],
-		[(0, 0.18), (0.1, 0.15), (0.5, 0.12), (0.84, 0.14), (0.93, 0.21), (1, 0.21)],
-		tip=[(1.15, -0.02), (0.85, 0.12), (0.35, 0.1), (0, 0.03), (-0.35, 0.1), (-0.85, 0.12), (-1.15, -0.02)],
-		chamfer=0.06,
-		plateau_ratio=0.45,
-		features=[(0.3, 1, 0.06, 0.03, 0), (0.62, -1, 0.07, 0.035, 0.2)],
-	)
+def build_jawbone_sword(part):
+	spine = [(0, 0.12), (0, 1.2), (0.08, 1.95), (0.24, 2.45)]
+	stations = [(0, 0.3, 0.16), (0.12, 0.24, 0.17), (0.55, 0.19, 0.18), (0.88, 0.16, 0.14), (1, 0, 0)]
+	outline, plateau = profile_shape(spine, stations, chamfer=0.07, plateau_ratio=0.4)
 	bm = bmesh.new()
-	add_plate(bm, outline, plateau, 0.05, 0.1)
-	bottom = -0.02 - 0.7
-	add_ball(bm, (0, 0, bottom - 0.1), 0.13, (1, 0.95, 1))
-	add_ball(bm, (0, -0.02, bottom - 0.21), 0.09, (0.85, 0.8, 0.6))
+	add_plate(bm, outline, plateau, 0.045, 0.1)
+	bottom = -0.03 - 0.72
+	add_ball(bm, (0, 0, bottom - 0.12), 0.14, (1, 0.95, 1))
+	add_ball(bm, (0, -0.03, bottom - 0.24), 0.1, (0.85, 0.8, 0.55))
 	part(bm, "Bone")
 
+	path = catmull_rom(spine, 8) + [Vector(spine[-1])]
 	bm = bmesh.new()
-	rib = [(0.06, 0.1), (0.28, 0.13), (0.46, 0.04), (0.5, -0.12)]
+	for index in range(11):
+		t = 0.1 + 0.075 * index
+		center = point_on_path(path, t)
+		ahead = point_on_path(path, min(t + 0.01, 1))
+		tangent = (ahead - center).normalized()
+		normal = Vector((tangent.y, -tangent.x))
+		width = 0.16 + 0.02 * math.sin(t * math.pi)
+		root = center + normal * (width - 0.03)
+		direction = normal + tangent * 0.45
+		length = 0.11 if index % 2 == 0 else 0.075
+		add_spike(bm, (root.x, 0, root.y), (direction.x, 0, direction.y), length, 0.04, sides=5)
 	for side in (-1, 1):
-		add_sweep(bm, [(side * x, z) for x, z in rib], [0.035, 0.032, 0.028, 0.02])
-		add_ball(bm, (side * 0.5, 0, -0.13), 0.045)
-	add_box(bm, (0.24, 0.2, 0.18), (0, 0, 0.08), 0.05)
+		add_ball(bm, (side * 0.07, -0.13, bottom - 0.2), 0.03, (1, 0.6, 1.3))
+	part(bm, "Tooth")
+
+	bm = bmesh.new()
+	add_box(bm, (0.26, 0.24, 0.2), (0, 0, 0.06), 0.06)
+	for side in (-1, 1):
+		add_sweep(bm, [(side * 0.1, 0.07), (side * 0.32, 0.12), (side * 0.48, 0.04)], [0.045, 0.04, 0.03])
+		add_ball(bm, (side * 0.5, 0, 0.03), 0.06)
+		add_spike(bm, (side * 0.2, 0, 0.15), (side * 0.3, 0, 1), 0.14, 0.035, sides=5)
+	add_pommel(bm, [(0.06, bottom + 0.02), (0.09, bottom), (0.09, bottom - 0.03), (0.06, bottom - 0.04)])
 	part(bm, "BoneDark")
 
 	bm = bmesh.new()
 	for side in (-1, 1):
-		add_ball(bm, (side * 0.05, -0.11, bottom - 0.08), 0.036, (1, 0.5, 1.2))
-	add_ball(bm, (0, -0.12, bottom - 0.14), 0.02, (1, 0.5, 1))
+		add_ball(bm, (side * 0.055, -0.115, bottom - 0.1), 0.04, (1, 0.5, 1.2))
+	add_ball(bm, (0, -0.13, bottom - 0.16), 0.022, (1, 0.5, 1))
 	part(bm, "Socket")
 
 	bm = bmesh.new()
-	add_grip(bm, -0.02, 0.7, 0.062, 0.075, 6)
+	add_grip(bm, -0.03, 0.72, 0.062, 0.075, 6)
 	part(bm, "Leather")
 
 	return {
 		"blade": "Bone",
 		"decals": [
-			[(0.06, 1.9), (0.02, 1.84), (0.05, 1.78)],
-			[(-0.05, 1.3), (-0.01, 1.24), (-0.04, 1.17), (0.0, 1.1)],
-			[(0.05, 0.7), (0.01, 0.64), (0.04, 0.58)],
+			[(-0.12, 1.85), (-0.07, 1.78), (-0.1, 1.7)],
+			[(-0.1, 1.2), (-0.05, 1.13), (-0.08, 1.05), (-0.03, 0.98)],
+			[(-0.14, 0.55), (-0.08, 0.5), (-0.11, 0.42)],
 		],
-		"effects": {"Bone": {"gradient": (0.1, 2.4, [(0, "D9C9A0"), (1, "F7EFD9")])}},
+		"effects": {"Bone": {"gradient": (0.1, 2.5, [(0, "D2BE92"), (1, "F7EFD9")])}},
 	}
 
 
-#// Desert 03 Sandstone Sword (Uncommon)
+#// Desert 03 Obelisk Sword (Uncommon)
 
-def build_sandstone_sword(part):
-	blade_base = 0.14
+def build_obelisk_sword(part):
+	blade_base = 0.3
+	length = 2.15
+	top = blade_base + length
 	outline, plateau = profile_shape(
-		[(0, blade_base), (0, blade_base + 2.3)],
-		[(0, 0.22), (0.06, 0.28), (0.8, 0.3), (1, 0.31)],
-		tip=[(1.0, -0.12), (0.62, 0.04), (0.2, -0.04), (-0.25, 0.06), (-0.7, -0.06), (-1.0, -0.16)],
-		chamfer=0.1,
-		features=[(0.25, 1, 0.12, 0.07, 0.3), (0.45, -1, 0.1, 0.06, 0), (0.7, 1, 0.08, 0.05, -0.2), (0.82, -1, 0.14, 0.08, 0.3)],
+		[(0, blade_base), (0, top)],
+		[(0, 0.27), (0.04, 0.29), (1, 0.23)],
+		tip=[(1.0, 0), (0, 0.36), (-1.0, 0)],
+		chamfer=0.09,
+		features=[(0.3, 1, 0.08, 0.05, 0.3), (0.6, -1, 0.1, 0.06, 0), (0.82, 1, 0.07, 0.04, -0.2)],
 	)
 	bm = bmesh.new()
-	add_plate(bm, outline, plateau, 0.04, 0.13)
+	add_plate(bm, outline, plateau, 0.05, 0.12)
 	part(bm, "Sandstone")
 
 	bm = bmesh.new()
-	add_box(bm, (0.78, 0.32, 0.22), (0, 0, 0.08), 0.05)
-	for side in (-1, 1):
-		add_box(bm, (0.2, 0.3, 0.12), (side * 0.29, 0, 0.23), 0.04)
+	cap = [Vector((-0.255, top - 0.06)), Vector((0.255, top - 0.06)), Vector((0, top + 0.37))]
+	add_plate(bm, cap, [Vector((0, top + 0.06)) + (point - Vector((0, top + 0.06))) * 0.5 for point in cap], 0.065, 0.14)
+	add_box(bm, (0.64, 0.33, 0.06), (0, 0, 0.29), 0.02)
 	bottom = -0.03 - 0.72
-	add_box(bm, (0.22, 0.22, 0.18), (0, 0, bottom - 0.07), 0.05)
+	add_lathe(bm, [(0.2, bottom - 0.26), (0, bottom)], 4, Matrix.Rotation(math.radians(45), 4, "Z"))
+	part(bm, "Gold", 30)
+
+	bm = bmesh.new()
+	for width, height, z in ((0.86, 0.34, 0.03), (0.68, 0.3, 0.13), (0.5, 0.28, 0.22)):
+		add_box(bm, (width, height, 0.1), (0, 0, z), 0.03)
 	part(bm, "SandstoneDark")
 
 	bm = bmesh.new()
 	add_grip(bm, -0.03, 0.72, 0.064, 0.077, 6)
-	part(bm, "Rope")
+	add_pommel(bm, [(0.06, bottom + 0.02), (0.1, bottom), (0.1, bottom - 0.03), (0.06, bottom - 0.04)])
+	part(bm, "DesertWood")
 
-	centers = [(0, blade_base + 0.45 + index * 0.36) for index in range(5)]
+	centers = [(0, blade_base + 0.3 + index * 0.37) for index in range(5)]
 	return {
 		"blade": "Sandstone",
-		"decals": glyph_strokes(GLYPHS, centers, 0.085),
-		"decal_width": 0.016,
-		"decal_colors": ("6A3416", "FFD9A0"),
+		"decals": glyph_strokes(GLYPHS, centers, 0.1),
+		"decal_width": 0.022,
+		"decal_colors": ("5A2A10", "FFE2B0"),
 		"effects": {
-			"Sandstone": {"gradient": (0.1, 2.6, [(0, "C9803E"), (1, "F0B672")]), "patterns": [("bands", "C47A3E", 5, 0.45)]},
-			"SandstoneDark": {"patterns": [("bands", "8A4A22", 7, 0.35)]},
+			"Sandstone": {"gradient": (0.3, 2.8, [(0, "C47A38"), (1, "F2BC7A")]), "patterns": [("bands", "D08A48", 4, 0.3)]},
+			"SandstoneDark": {"patterns": [("bands", "8A4A22", 9, 0.35)]},
 		},
 	}
 
@@ -1457,117 +1500,153 @@ def build_sandstone_sword(part):
 #// Desert 04 Nomad Khopesh (Uncommon)
 
 def build_nomad_khopesh(part):
-	spine = [(0, 0.12), (0, 0.95), (0.12, 1.55), (0.5, 1.95), (0.95, 2.0), (1.25, 1.78)]
-	stations = [(0, 0.075, 0.075), (0.3, 0.075, 0.075), (0.42, 0.15, 0.07), (0.65, 0.42, 0.08), (0.86, 0.32, 0.07), (1, 0, 0)]
-	outline, plateau = profile_shape(spine, stations, chamfer=0.07, features=[(0.7, -1, 0.08, 0.04, 0)])
+	spine = [(0, 0.16), (0, 0.95), (0.12, 1.55), (0.5, 1.95), (0.95, 2.0), (1.25, 1.78)]
+	stations = [(0, 0.08, 0.08), (0.3, 0.08, 0.08), (0.42, 0.16, 0.08), (0.65, 0.44, 0.09), (0.86, 0.34, 0.08), (1, 0, 0)]
+	outline, plateau = profile_shape(spine, stations, chamfer=0.08, features=[(0.7, -1, 0.08, 0.04, 0)])
 	bm = bmesh.new()
-	add_plate(bm, outline, plateau, 0.02, 0.08)
-	add_pommel(bm, [(0.06, -0.01), (0.11, 0.02), (0.11, 0.1), (0.07, 0.15)])
-	bottom = -0.02 - 0.75
+	add_plate(bm, outline, plateau, 0.025, 0.1)
+	bottom = -0.04 - 0.75
 	add_pommel(bm, [(0.05, bottom + 0.01), (0.08, bottom - 0.02), (0.13, bottom - 0.06), (0.12, bottom - 0.1), (0, bottom - 0.12)])
 	part(bm, "Bronze")
 
+	edge, edge_plateau = profile_shape(spine, [(t, left + 0.035, right + 0.02) for t, left, right in stations], chamfer=0.03, plateau_ratio=0.5)
 	bm = bmesh.new()
-	add_pommel(bm, [(0.1, 0.04), (0.118, 0.05), (0.118, 0.08), (0.1, 0.09)])
-	add_cabochon(bm, (0, 0, 0.5), 0.045, 0.1)
+	add_plate(bm, edge, edge_plateau, 0.008, 0.02)
+	part(bm, "BronzeEdge")
+
+	bm = bmesh.new()
+	add_pommel(bm, [(0.06, -0.04), (0.13, -0.01), (0.13, 0.12), (0.07, 0.17)])
+	for side in (-1, 1):
+		add_sweep(bm, [(side * 0.08, 0.06), (side * 0.25, 0.08), (side * 0.32, 0.16)], [0.04, 0.035, 0.0])
+	for height in (-0.25, -0.5):
+		add_pommel(bm, [(0.06, height - 0.02), (0.088, height - 0.01), (0.088, height + 0.01), (0.06, height + 0.02)])
+	part(bm, "Gold")
+
+	bm = bmesh.new()
+	add_pommel(bm, [(0.125, 0.03), (0.14, 0.04), (0.14, 0.08), (0.125, 0.09)])
+	add_cabochon(bm, (0, 0, bottom - 0.06), 0.05, 0.2)
 	part(bm, "Turquoise", CRYSTAL_SMOOTH_ANGLE)
 
 	bm = bmesh.new()
-	add_grip(bm, -0.02, 0.75, 0.062, 0.075, 7)
-	part(bm, "Leather")
+	add_grip(bm, -0.04, 0.75, 0.062, 0.075, 7)
+	part(bm, "DarkLeather")
 
+	eye_center = (0.38, 1.82)
+	eye = [
+		[(eye_center[0] - 0.12, eye_center[1]), (eye_center[0], eye_center[1] + 0.07), (eye_center[0] + 0.12, eye_center[1]), (eye_center[0], eye_center[1] - 0.05), (eye_center[0] - 0.12, eye_center[1])],
+		[(eye_center[0] - 0.02, eye_center[1] - 0.05), (eye_center[0] - 0.04, eye_center[1] - 0.14)],
+		[(eye_center[0] + 0.04, eye_center[1] - 0.04), (eye_center[0] + 0.1, eye_center[1] - 0.1), (eye_center[0] + 0.14, eye_center[1] - 0.06)],
+	]
 	return {
 		"blade": "Bronze",
-		"decals": [[(0, 0.25), (0, 0.42)], [(0, 0.58), (0, 0.95)]],
-		"decal_width": 0.022,
+		"decals": [[(0, 0.3), (0, 0.95)]] + eye,
+		"decal_width": 0.02,
 		"decal_colors": ("2FC9B8", "A8FFF2"),
-		"effects": {"Bronze": {"gradient": (0.1, 2.1, [(0, "9A5A22"), (1, "F0B060")])}},
+		"effects": {"Bronze": {"gradient": (0.1, 2.1, [(0, "8A4E1C"), (1, "E8A858")])}},
 	}
 
 
 #// Desert 05 Scorpion Sword (Rare)
 
 def build_scorpion_sword(part):
-	path = catmull_rom([(0, 0.2), (0, 1.1), (0.08, 1.8), (0.32, 2.35), (0.62, 2.62)], 8) + [Vector((0.62, 2.62))]
+	path = catmull_rom([(0, 0.24), (0, 1.1), (0.08, 1.8), (0.32, 2.35), (0.62, 2.62)], 8) + [Vector((0.62, 2.62))]
 	bm = bmesh.new()
 	segments = 6
 	for index in range(segments):
-		start = index / segments * 0.95
-		end = min(start + 0.22, 1)
+		start = index / segments * 0.96 + 0.01
+		end = start + 0.96 / segments - 0.02
 		spine = [point_on_path(path, start), point_on_path(path, (start + end) / 2), point_on_path(path, end)]
-		width = 0.27 - 0.022 * index
-		outline, plateau = profile_shape(spine, [(0, width * 0.75), (0.45, width), (1, width * 0.7)], tip="round", chamfer=0.07)
-		add_plate(bm, outline, plateau, 0.04, 0.13 - 0.01 * index)
-	add_sweep(bm, [(0.62, 2.62), (0.85, 2.78), (1.02, 2.72), (1.08, 2.55)], [0.08, 0.065, 0.04, 0.0])
+		width = 0.27 - 0.025 * index
+		outline, plateau = profile_shape(spine, [(0, width * 0.7), (0.5, width), (1, width * 0.75)], tip="round", chamfer=0.08, plateau_ratio=0.25)
+		add_plate(bm, outline, plateau, 0.04, 0.12)
+	stinger = [(0.62, 2.62), (0.82, 2.76), (0.98, 2.74), (1.08, 2.58), (1.04, 2.44)]
+	add_ball(bm, (0.72, 0, 2.7), 0.13, (1.2, 0.9, 0.9))
+	add_sweep(bm, stinger, [0.07, 0.065, 0.05, 0.03, 0.0], sides=8)
 	part(bm, "Chitin")
 
 	bm = bmesh.new()
+	add_sweep(bm, [point_on_path(path, t) for t in (0, 0.33, 0.66, 1)], [0.07, 0.065, 0.055, 0.05], sides=8)
 	for side in (-1, 1):
-		add_sweep(bm, [(side * x, z) for x, z in ((0.1, 0.1), (0.32, 0.16), (0.48, 0.32))], [0.055, 0.05, 0.045])
-		add_sweep(bm, [(side * x, z) for x, z in ((0.48, 0.32), (0.62, 0.5), (0.56, 0.68))], [0.045, 0.03, 0.0])
-		add_sweep(bm, [(side * x, z) for x, z in ((0.48, 0.32), (0.4, 0.5), (0.45, 0.62))], [0.04, 0.025, 0.0])
-	add_box(bm, (0.32, 0.24, 0.24), (0, 0, 0.1), 0.05)
+		arm = [(side * 0.12, 0.12), (side * 0.32, 0.18), (side * 0.48, 0.34)]
+		add_sweep(bm, arm, [0.06, 0.055, 0.05])
+		add_ball(bm, (side * 0.48, 0, 0.34), 0.085)
+		add_sweep(bm, [(side * 0.48, 0.34), (side * 0.66, 0.52), (side * 0.6, 0.74)], [0.065, 0.045, 0.0])
+		add_sweep(bm, [(side * 0.46, 0.38), (side * 0.38, 0.56), (side * 0.44, 0.68)], [0.05, 0.03, 0.0])
+		for step in range(3):
+			t = 0.25 + step * 0.22
+			base = Vector((side * (0.58 - 0.02 * step), 0, 0.46 + t * 0.3))
+			add_spike(bm, base, (-side, 0, 0.3), 0.06, 0.018, sides=4)
+	add_box(bm, (0.32, 0.26, 0.26), (0, 0, 0.12), 0.07)
 	bottom = -0.02 - 0.75
 	add_pommel(bm, [(0.05, bottom + 0.01), (0.1, bottom - 0.03), (0.1, bottom - 0.08), (0.06, bottom - 0.11)])
 	add_spike(bm, (0, 0, bottom - 0.1), (0, 0, -1), 0.25, 0.07)
-	part(bm, "ChitinDark")
-
-	bm = bmesh.new()
-	add_cabochon(bm, (0, 0, 0.1), 0.08, 0.15)
-	add_ball(bm, (1.08, 0, 2.5), 0.045, (1, 1, 1.4))
-	part(bm, "Venom")
-
-	bm = bmesh.new()
 	add_grip(bm, -0.02, 0.75, 0.064, 0.08, 6)
 	part(bm, "ChitinDark")
+
+	bm = bmesh.new()
+	add_cabochon(bm, (0, 0, 0.12), 0.08, 0.16)
+	add_ball(bm, (1.02, 0, 2.38), 0.045, (1, 1, 1.4))
+	part(bm, "Venom")
 
 	return {
 		"blade": "Chitin",
 		"effects": {
-			"Chitin": {"gradient": (0.2, 2.8, [(0, "5A1A1E"), (1, "C0503E")]), "patterns": [("cells", "D8735E", 3, 0.25)]},
+			"Chitin": {"gradient": (0.2, 2.8, [(0, "4A1218"), (0.6, "A63A2E"), (1, "E86A3A")])},
+			"ChitinDark": {"gradient": (-0.9, 0.8, [(0, "2A0A10"), (1, "6A2028")])},
 		},
 	}
 
 
-#// Desert 06 Sand Serpent (Rare)
+#// Desert 06 Cobra Fang (Rare)
 
-def build_sand_serpent(part):
-	spine = [(0, 0.16), (0.05, 0.5), (-0.05, 0.85), (0.05, 1.2), (-0.05, 1.55), (0.05, 1.9), (-0.03, 2.25), (0, 2.6)]
-	stations = [(0, 0.17, 0.28), (0.08, 0.17, 0.22), (0.2, 0.16, 0.17), (0.85, 0.14, 0.14), (1, 0, 0)]
-	outline, plateau = profile_shape(spine, stations, chamfer=0.06)
+def build_cobra_fang(part):
+	spine = [(0, 0.3), (0.02, 1.2), (0.1, 2.0), (0.26, 2.6)]
+	stations = [(0, 0.17, 0.17), (0.1, 0.2, 0.2), (0.6, 0.17, 0.2), (0.88, 0.12, 0.15), (1, 0, 0)]
+	outline, plateau = profile_shape(spine, stations, chamfer=0.08, plateau_ratio=0.35)
 	bm = bmesh.new()
-	add_plate(bm, outline, plateau, 0.018, 0.08)
-	add_sweep(bm, [(0.12, 0.08), (0.32, 0.1), (0.44, 0.26), (0.4, 0.42)], [0.05, 0.055, 0.06, 0.055])
-	add_ball(bm, (0.33, 0, 0.5), 0.11, (1.4, 0.9, 0.9))
-	add_sweep(bm, [(-0.12, 0.08), (-0.3, 0.06), (-0.38, 0.18), (-0.3, 0.26)], [0.05, 0.04, 0.03, 0.0])
+	add_plate(bm, outline, plateau, 0.03, 0.1)
+	part(bm, "Fang")
+
+	bm = bmesh.new()
+	hood, hood_plateau = profile_shape([(0, -0.1), (0, 0.5), (0, 1.15)], [(0, 0.16), (0.3, 0.56), (0.65, 0.5), (1, 0.18)], tip="round", chamfer=0.08)
+	add_plate(bm, hood, hood_plateau, 0.03, 0.065, Matrix.Translation((0, 0.13, 0)))
+	add_ball(bm, (0, -0.03, 0.22), 0.2, (1.25, 1.05, 0.8))
+	add_ball(bm, (0, -0.1, 0.08), 0.12, (1.0, 0.9, 0.5))
+	tail = [(0, -0.03 - 0.75), (0.08, -0.03 - 0.86), (0.2, -0.03 - 0.88), (0.24, -0.03 - 0.78)]
+	add_sweep(bm, tail, [0.065, 0.055, 0.04, 0.0])
 	part(bm, "Serpent")
 
 	bm = bmesh.new()
 	for side in (-1, 1):
-		add_ball(bm, (0.37, side * 0.085, 0.54), 0.03)
+		add_ball(bm, (side * 0.32, 0.06, 0.68), 0.09, (1, 0.4, 1.2))
+		add_ball(bm, (side * 0.32, 0.06, 0.68), 0.05, (1, 0.6, 1.2))
+	add_box(bm, (0.1, 0.07, 0.6), (0, 0.07, 0.6), 0.02)
+	for height in (-0.2, -0.45, -0.7):
+		add_pommel(bm, [(0.06, height - 0.02), (0.088, height - 0.01), (0.088, height + 0.01), (0.06, height + 0.02)])
+	part(bm, "Gold")
+
+	bm = bmesh.new()
+	for side in (-1, 1):
+		add_ball(bm, (side * 0.13, -0.19, 0.28), 0.045, (1, 0.6, 1))
 	part(bm, "SnakeEye")
 
 	bm = bmesh.new()
 	for side in (-1, 1):
-		add_spike(bm, (0.22, side * 0.04, 0.45), (-0.2, 0, -1), 0.08, 0.015, sides=4)
+		add_spike(bm, (side * 0.07, -0.19, 0.12), (0, -0.2, -1), 0.12, 0.02, sides=5)
 	part(bm, "Bone")
 
 	bm = bmesh.new()
-	add_box(bm, (0.3, 0.22, 0.18), (0, 0, 0.06), 0.04)
-	add_pommel(bm, [(0.06, -0.06), (0.095, -0.04), (0.095, -0.01), (0.06, 0.0)])
-	bottom = -0.03 - 0.75
-	add_pommel(bm, [(0.06, bottom + 0.01), (0.1, bottom - 0.02), (0.11, bottom - 0.08), (0.07, bottom - 0.13), (0, bottom - 0.15)])
-	part(bm, "Gold")
-
-	bm = bmesh.new()
-	add_grip(bm, -0.03, 0.75, 0.062, 0.075, 7)
-	add_cabochon(bm, (0, 0, bottom - 0.08), 0.05, 0.18)
-	part(bm, "Turquoise")
+	add_grip(bm, -0.03, 0.75, 0.064, 0.077, 7)
+	part(bm, "Hood")
 
 	return {
-		"blade": "Serpent",
+		"blade": "Fang",
+		"outline": outline,
+		"edge_glow": ("B8FF6A", 0.05),
 		"effects": {
-			"Serpent": {"gradient": (0.16, 2.7, [(0, "2E7A5A"), (0.7, "3FAE7A"), (1, "E8C25A")]), "patterns": [("cells", "7FE0B0", 9, 0.45)]},
+			"Fang": {"gradient": (0.3, 2.7, [(0, "F4EAD2"), (0.6, "E8E2B8"), (1, "9CFF3A")])},
+			"Serpent": {"gradient": (-0.1, 1.0, [(0, "1E6A4A"), (1, "4FC08A")]), "patterns": [("cells", "8FE8B8", 10, 0.5)]},
+			"Hood": {"patterns": [("cells", "2E7A5A", 9, 0.4)]},
 		},
 	}
 
@@ -1575,10 +1654,10 @@ def build_sand_serpent(part):
 #// Desert 07 Mummy Blade (Epic)
 
 def build_mummy_blade(part):
-	blade_base = 0.2
+	blade_base = 0.22
 	spine = [(0, blade_base), (0, blade_base + 2.9)]
 	stations = [(0, 0.2), (0.08, 0.26), (0.7, 0.25), (0.88, 0.18), (1, 0)]
-	outline, plateau = profile_shape(spine, stations, chamfer=0.1, features=[(0.4, 1, 0.08, 0.05, 0), (0.66, -1, 0.1, 0.06, 0.2)])
+	outline, plateau = profile_shape(spine, stations, chamfer=0.1)
 	bm = bmesh.new()
 	add_plate(bm, outline, plateau)
 	part(bm, "Cursed")
@@ -1586,32 +1665,43 @@ def build_mummy_blade(part):
 	rim, rim_plateau = profile_shape(spine, [(t, width + 0.05) for t, width in stations], chamfer=0.03, plateau_ratio=0.5)
 	bm = bmesh.new()
 	add_plate(bm, rim, rim_plateau, 0.006, 0.016)
-	add_cabochon(bm, (0, 0, 0.1), 0.09, 0.16)
+	add_cabochon(bm, (0, 0, 0.12), 0.09, 0.16)
 	bottom = -0.04 - 0.78
 	for side in (-1, 1):
-		add_ball(bm, (side * 0.045, -0.12, bottom - 0.08), 0.028)
+		add_ball(bm, (side * 0.05, -0.13, bottom - 0.1), 0.03)
 	part(bm, "CurseGlow")
 
 	bm = bmesh.new()
-	add_sweep(bm, [(-0.55, 0.12), (0, 0.08), (0.55, 0.12)], [0.05, 0.06, 0.05])
-	add_ball(bm, (0, 0, bottom - 0.1), 0.13)
+	for index in range(6):
+		low = blade_base + 0.3 + index * 0.4
+		lean = 0.16 if index % 2 == 0 else -0.16
+		half = 0.33
+		band = [Vector((-half, low)), Vector((half, low + lean)), Vector((half, low + lean + 0.1)), Vector((-half, low + 0.1))]
+		if lean < 0:
+			band = [Vector((-half, low - lean)), Vector((half, low)), Vector((half, low + 0.1)), Vector((-half, low - lean + 0.1))]
+		add_plate(bm, band, None, 0.115)
+	flap = [Vector((0.3, 1.32)), Vector((0.5, 1.2)), Vector((0.56, 1.05)), Vector((0.47, 1.1)), Vector((0.3, 1.24))]
+	add_plate(bm, flap, None, 0.02, matrix=Matrix.Translation((0, -0.1, 0)))
+	add_sweep(bm, [(-0.55, 0.14), (0, 0.1), (0.55, 0.14)], [0.055, 0.065, 0.055])
+	add_ball(bm, (0, 0, bottom - 0.12), 0.14)
+	for height, tilt in ((-0.05, 18), (-0.12, -14), (-0.2, 10)):
+		add_torus(bm, 0.135, 0.025, 14, 5, Matrix.Translation((0, 0, bottom - 0.12 + height + 0.12)) @ Matrix.Rotation(math.radians(90 + tilt), 4, "X"))
 	add_grip(bm, -0.04, 0.78, 0.064, 0.077, 7)
 	part(bm, "Bandage")
 
 	bm = bmesh.new()
-	add_box(bm, (0.3, 0.22, 0.24), (0, 0, 0.1), 0.05)
+	add_box(bm, (0.32, 0.24, 0.26), (0, 0, 0.12), 0.06)
+	for side in (-1, 1):
+		add_ball(bm, (side * 0.6, 0, 0.14), 0.07)
 	part(bm, "Gold")
 
-	bandages = [[(-0.32, blade_base + 0.45 + index * 0.36), (0.32, blade_base + 0.61 + index * 0.36)] for index in range(6)]
 	return {
 		"blade": "Cursed",
 		"outline": outline,
-		"edge_glow": ("7CFF5A", 0.06),
-		"decals": bandages,
-		"decal_width": 0.04,
-		"decal_colors": ("E8DCC0", "FFFFFF"),
+		"edge_glow": ("7CFF5A", 0.07),
 		"effects": {
-			"Cursed": {"gradient": (0.2, 3.1, [(0, "1E3A34"), (1, "4E8A70")]), "patterns": [("cells", "7CFF5A", 2.5, 0.35)]},
+			"Cursed": {"gradient": (0.2, 3.1, [(0, "14302A"), (1, "3E7A60")]), "patterns": [("cells", "7CFF5A", 3, 0.55)]},
+			"Bandage": {"patterns": [("nebula", "C9BA98", 7, 0.45)]},
 		},
 	}
 
@@ -1619,42 +1709,53 @@ def build_mummy_blade(part):
 #// Desert 08 Pharaoh Sword (Epic)
 
 def build_pharaoh_sword(part):
-	blade_base = 0.22
+	blade_base = 0.24
 	outline, plateau = profile_shape(
 		[(0, blade_base), (0, blade_base + 3.0)],
-		[(0, 0.2), (0.08, 0.25), (0.45, 0.22), (0.78, 0.34), (0.9, 0.28), (1, 0)],
+		[(0, 0.19), (0.08, 0.24), (0.45, 0.21), (0.76, 0.32), (0.88, 0.27), (1, 0)],
 		chamfer=0.1,
 	)
 	bm = bmesh.new()
 	add_plate(bm, outline, plateau)
 	part(bm, "PharaohGold")
 
-	bm = bmesh.new()
-	add_sweep(bm, [(-0.62, 0.18), (-0.35, 0.08), (0, 0.06), (0.35, 0.08), (0.62, 0.18)], [0.07, 0.055, 0.07, 0.055, 0.07])
-	add_box(bm, (0.32, 0.22, 0.24), (0, 0, 0.1), 0.05)
-	add_pommel(bm, [(0.06, -0.06), (0.095, -0.04), (0.095, -0.01), (0.06, 0.0)])
-	bottom = -0.03 - 0.78
-	add_pommel(bm, [(0.06, bottom + 0.03), (0.095, bottom + 0.01), (0.095, bottom - 0.02), (0.06, bottom - 0.03)])
-	add_lathe(bm, [(0.17, bottom - 0.24), (0, bottom)], 4, Matrix.Rotation(math.radians(45), 4, "Z"))
-	part(bm, "Gold", CRYSTAL_SMOOTH_ANGLE + 20)
+	nemes = {"Lapis": bmesh.new(), "PharaohGold": bmesh.new()}
+	for side in (-1, 1):
+		for index in range(4):
+			low = 0.2 - index * 0.11
+			band = [Vector((side * 0.16, low + 0.2)), Vector((side * 0.7, low + 0.02)), Vector((side * 0.72, low - 0.06)), Vector((side * 0.16, low + 0.1))]
+			add_plate(nemes["Lapis" if index % 2 == 0 else "PharaohGold"], band if side > 0 else band[::-1], None, 0.045)
+	for key, nemes_part in nemes.items():
+		part(nemes_part, key)
 
 	bm = bmesh.new()
-	for side in (-1, 1):
-		add_cabochon(bm, (side * 0.64, 0, 0.2), 0.05, 0.13)
+	add_box(bm, (0.34, 0.24, 0.32), (0, 0, 0.14), 0.06)
+	add_torus(bm, 0.14, 0.03, 16, 6, Matrix.Translation((0, -0.13, 0.14)))
+	add_torus(bm, 0.14, 0.03, 16, 6, Matrix.Translation((0, 0.13, 0.14)))
+	bottom = -0.03 - 0.78
+	for height in (-0.04, bottom + 0.02):
+		add_pommel(bm, [(0.06, height - 0.02), (0.095, height - 0.01), (0.095, height + 0.02), (0.06, height + 0.03)])
+	add_torus(bm, 0.11, 0.035, 16, 6, Matrix.Translation((0, 0, bottom - 0.2)))
+	add_box(bm, (0.32, 0.08, 0.07), (0, 0, bottom - 0.06), 0.02)
+	add_box(bm, (0.07, 0.08, 0.1), (0, 0, bottom - 0.03), 0.02)
+	part(bm, "Gold")
+
+	bm = bmesh.new()
+	add_cabochon(bm, (0, 0, 0.14), 0.1, 0.16)
+	part(bm, "Turquoise", CRYSTAL_SMOOTH_ANGLE)
+
+	bm = bmesh.new()
 	add_grip(bm, -0.03, 0.78, 0.064, 0.077, 7)
 	part(bm, "Lapis")
-
-	bm = bmesh.new()
-	add_cabochon(bm, (0, 0, 0.1), 0.09, 0.15)
-	part(bm, "Turquoise", CRYSTAL_SMOOTH_ANGLE)
 
 	return {
 		"blade": "PharaohGold",
 		"outline": outline,
 		"edge_glow": ("FFF0B0", 0.05),
-		"effects": {
-			"PharaohGold": {"gradient": (0.2, 3.2, [(0, "D98E1E"), (1, "FFD86A")]), "patterns": [("bands", "2A4BC9", 2.2, 0.9)]},
-		},
+		"decals": [[(0, blade_base + 0.2), (0, blade_base + 2.55)]],
+		"decal_width": 0.05,
+		"decal_colors": ("2A4BC9", "8AA8FF"),
+		"effects": {"PharaohGold": {"gradient": (0.2, 3.2, [(0, "D98E1E"), (1, "FFD86A")])}},
 	}
 
 
@@ -1721,42 +1822,53 @@ def build_sandstorm_sword(part):
 #// Desert 10 Scarab Sword (Legendary)
 
 def build_scarab_sword(part):
-	blade_base = 0.24
-	outline, plateau = profile_shape(
-		[(0, blade_base), (0, blade_base + 3.0)],
-		[(0, 0.22), (0.1, 0.3), (0.45, 0.34), (0.75, 0.3), (0.92, 0.18), (1, 0)],
-		chamfer=0.12,
-	)
+	blade_base = 0.34
+	spine = [(0, blade_base), (0, blade_base + 2.95)]
+	stations = [(0, 0.2), (0.1, 0.3), (0.45, 0.34), (0.75, 0.3), (0.92, 0.18), (1, 0)]
+	outline, plateau = profile_shape(spine, stations, chamfer=0.12)
 	bm = bmesh.new()
 	add_plate(bm, outline, plateau)
+	add_ball(bm, (0, 0, 0.18), 0.2, (1.0, 0.85, 1.25))
 	part(bm, "Scarab")
 
+	rim, rim_plateau = profile_shape(spine, [(t, width + 0.035) for t, width in stations], chamfer=0.02, plateau_ratio=0.5)
 	bm = bmesh.new()
+	add_plate(bm, rim, rim_plateau, 0.006, 0.016)
 	for y in (-0.1, 0.1):
 		add_sweep(bm, [(0, y, blade_base + 0.1), (0, y, blade_base + 1.5), (0, y, blade_base + 2.7)], [0.014, 0.014, 0.0], sides=5)
+	add_ball(bm, (0, 0, 0.43), 0.08, (1.1, 0.8, 0.8))
 	for side in (-1, 1):
-		add_sweep(bm, [(side * 0.12, 0.05), (side * 0.35, -0.05), (side * 0.45, -0.2)], [0.025, 0.022, 0.0])
-	add_box(bm, (0.34, 0.22, 0.26), (0, 0, 0.12), 0.05)
-	for y in (-0.13, 0.13):
-		add_torus(bm, 0.12, 0.025, 16, 6, Matrix.Translation((0, y, 0.12)))
+		add_sweep(bm, [(side * 0.08, 0.42), (side * 0.2, 0.52), (side * 0.12, 0.66)], [0.025, 0.022, 0.016])
+		add_sweep(bm, [(side * 0.12, 0.1), (side * 0.3, 0.0), (side * 0.34, -0.14)], [0.025, 0.022, 0.0])
+	add_torus(bm, 0.15, 0.03, 18, 6, Matrix.Translation((0, -0.14, 0.72)))
+	add_torus(bm, 0.15, 0.03, 18, 6, Matrix.Translation((0, 0.14, 0.72)))
 	bottom = -0.03 - 0.8
+	for height in (-0.04, -0.4, bottom + 0.02):
+		add_pommel(bm, [(0.06, height - 0.02), (0.095, height - 0.01), (0.095, height + 0.02), (0.06, height + 0.03)])
 	add_pommel(bm, [(0.06, bottom + 0.01), (0.1, bottom - 0.03), (0.12, bottom - 0.09), (0.07, bottom - 0.14), (0, bottom - 0.16)])
 	part(bm, "Gold")
 
-	bm = bmesh.new()
+	feathers = [(-6, 0.95, 0.12), (8, 0.88, 0.115), (22, 0.76, 0.11), (36, 0.62, 0.1)]
+	gold_feathers = bmesh.new()
+	blue_feathers = bmesh.new()
 	for side in (-1, 1):
-		for spine, width in (([(0.15, 0.16), (0.42, 0.35), (0.78, 0.5)], 0.13), ([(0.15, 0.08), (0.4, 0.12), (0.7, 0.16)], 0.1)):
-			wing, wing_plateau = profile_shape([(side * x, z) for x, z in spine], [(0, width * 0.5), (0.35, width), (1, width * 0.6)], tip="round", chamfer=width * 0.35)
-			add_plate(bm, wing, wing_plateau, 0.012, 0.035, Matrix.Translation((0, 0.03, 0)))
-	part(bm, "ScarabWing")
+		root = Vector((side * 0.16, 0.22))
+		for index, (angle, length, width) in enumerate(feathers):
+			direction = Vector((side * math.cos(math.radians(angle)), math.sin(math.radians(angle))))
+			feather_spine = [root, root + direction * length * 0.5 + Vector((0, 0.04)), root + direction * length]
+			feather, feather_plateau = profile_shape(feather_spine, [(0, width * 0.5), (0.3, width), (1, width * 0.75)], tip="round", chamfer=width * 0.35)
+			target = gold_feathers if index % 2 == 0 else blue_feathers
+			add_plate(target, feather, feather_plateau, 0.01, 0.03, Matrix.Translation((0, 0.06 + index * 0.012, 0)))
+	part(gold_feathers, "ScarabWing")
+	part(blue_feathers, "Lapis")
 
 	bm = bmesh.new()
-	add_cabochon(bm, (0, 0, 0.12), 0.1, 0.17)
+	add_cabochon(bm, (0, 0, 0.72), 0.12, 0.17)
 	part(bm, "SunGlow")
 
 	bm = bmesh.new()
 	add_grip(bm, -0.03, 0.8, 0.064, 0.077, 7)
-	add_cabochon(bm, (0, 0, bottom - 0.08), 0.05, 0.2)
+	add_cabochon(bm, (0, 0, bottom - 0.08), 0.05, 0.22)
 	part(bm, "Lapis")
 
 	return {
@@ -1765,9 +1877,10 @@ def build_scarab_sword(part):
 		"edge_glow": ("FFD86A", 0.05),
 		"effects": {
 			"Scarab": {
-				"gradient": (0.24, 3.3, [(0, "1E6B8A"), (0.4, "2FB8A0"), (0.75, "7AD05A"), (1, "B07AE0")]),
+				"gradient": (0.0, 3.3, [(0, "1E6B8A"), (0.4, "2FB8A0"), (0.75, "7AD05A"), (1, "B07AE0")]),
 				"patterns": [("cells", "B8FFE0", 3, 0.25)],
 			},
+			"ScarabWing": {"gradient": (0.1, 0.9, [(0, "D08A20"), (1, "FFD86A")])},
 		},
 	}
 
@@ -1921,11 +2034,11 @@ def build_djinn_king_scimitar(part):
 
 DESERT_SWORDS = [
 	("CactusSword", "Common", build_cactus_sword),
-	("BoneSword", "Common", build_bone_sword),
-	("SandstoneSword", "Uncommon", build_sandstone_sword),
+	("JawboneSword", "Common", build_jawbone_sword),
+	("ObeliskSword", "Uncommon", build_obelisk_sword),
 	("NomadKhopesh", "Uncommon", build_nomad_khopesh),
 	("ScorpionSword", "Rare", build_scorpion_sword),
-	("SandSerpent", "Rare", build_sand_serpent),
+	("CobraFang", "Rare", build_cobra_fang),
 	("MummyBlade", "Epic", build_mummy_blade),
 	("PharaohSword", "Epic", build_pharaoh_sword),
 	("SandstormSword", "Legendary", build_sandstorm_sword),
