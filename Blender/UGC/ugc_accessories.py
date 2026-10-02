@@ -17,7 +17,8 @@ from mathutils import Matrix, Vector
 TEXTURE_SIZE = 1024
 BAKE_SAMPLES = 64
 UV_MARGIN = 0.01
-OUTLINE_STRIP = 0.02  # left part of the texture painted black for the outline shell
+OUTLINE_STRIP = 0.03  # left part of the texture painted black for the outline shell
+OUTLINE_STRIP_GAP = 0.03  # empty space between the strip and the UV islands, keeps mipmaps from bleeding black
 PACK_SPACING = 3.4
 
 SMOOTH_ANGLE = 60  # auto smooth angle, every edge sharper than this stays hard
@@ -296,6 +297,7 @@ def add_plate(bm, outline, plateau=None, edge_thickness=0.01, center_thickness=0
 	ngons = list({face for vert in new_verts for face in vert.link_faces if len(face.verts) > 4})
 	bmesh.ops.triangulate(bm, faces=ngons, ngon_method="BEAUTY")
 	bmesh.ops.transform(bm, matrix=matrix, verts=new_verts)
+	return new_verts
 
 
 def add_lathe(bm, profile, sides, matrix=Matrix(), closed=False):
@@ -401,6 +403,28 @@ def add_feather(bm, spine, width, matrix):
 	add_plate(bm, outline, plateau, 0.01, 0.03, matrix)
 
 
+def wing_outline(top, tips, bulge, steps=5):
+	# Top edge as a smooth curve, bottom edge made of rounded feather tips.
+	outline = catmull_rom(top, 4)
+	center = sum((Vector(point) for point in top + tips), Vector((0, 0))) / len(top + tips)
+	for start, end in zip(tips, tips[1:]):
+		start, end = Vector(start), Vector(end)
+		middle = (start + end) / 2
+		control = middle + (middle - center).normalized() * bulge
+		for step in range(steps):
+			t = step / steps
+			outline.append((1 - t) ** 2 * start + 2 * (1 - t) * t * control + t ** 2 * end)
+	return simplify(outline)
+
+
+def curve_back(bend, start):
+	# Bends wings backwards the further they reach from the spine.
+	def bend_wing(co):
+		co.y += bend * max(0, abs(co.x) - start) ** 2
+		return co
+	return bend_wing
+
+
 #// 01 Classic Fedora
 
 def build_classic_fedora(part):
@@ -411,14 +435,14 @@ def build_classic_fedora(part):
 		height = clamp((co.z - 0.55) / 0.5)
 		co.y *= 1.12
 		front = max(0, -co.y / 0.7)
-		co.x *= 1 - 0.25 * front ** 2 * height
-		co.z -= 0.14 * math.exp(-(co.x / 0.17) ** 2) * height ** 2
+		co.x *= 1 - 0.18 * front ** 2 * height
+		co.z -= 0.05 * math.exp(-(co.x / 0.3) ** 2) * height ** 2
 		return co
 
 	deform(bm, shape_crown)
 
 	brim = bmesh.new()
-	add_lathe(brim, [(0.56, 0.4), (0.98, 0.395), (1.05, 0.41), (1.03, 0.435), (0.96, 0.445), (0.56, 0.44)], 28, closed=True)
+	add_lathe(brim, [(0.56, 0.4), (0.98, 0.395), (1.05, 0.41), (1.03, 0.435), (0.96, 0.445), (0.56, 0.44)], 32, closed=True)
 
 	def shape_brim(co):
 		radius = max(co.xy.length, 1e-6)
@@ -439,9 +463,14 @@ def build_classic_fedora(part):
 	part(bm, "Band")
 
 	bm = bmesh.new()
-	feather_matrix = Matrix.Translation((-0.68, 0.12, 0.47)) @ Matrix.Rotation(math.radians(90), 4, "Z")
-	add_feather(bm, [(0, 0), (0.12, 0.25), (0.34, 0.5)], 0.09, feather_matrix)
+	feather_matrix = Matrix.Translation((-0.64, 0.14, 0.47)) @ Matrix.Rotation(math.radians(125), 4, "Z")
+	add_feather(bm, [(0, 0), (0.1, 0.3), (0.3, 0.6)], 0.12, feather_matrix)
 	part(bm, "Feather", subdivide=1)
+
+	bm = bmesh.new()
+	shaft = [feather_matrix @ Vector((x, -0.035, z)) for x, z in ((0, -0.04), (0.1, 0.3), (0.27, 0.55))]
+	add_sweep(bm, shaft, [0.014, 0.011, 0.0], sides=5)
+	part(bm, "Band")
 
 	return {
 		"attachment": "Hat",
@@ -455,17 +484,18 @@ def build_classic_fedora(part):
 #// 02 Sky Valkyrie Helm
 
 def build_sky_valkyrie_helm(part):
+	profile = [(0.66, 0.0), (0.69, 0.22), (0.66, 0.46), (0.56, 0.68), (0.36, 0.84), (0, 0.9)]
 	bm = bmesh.new()
-	add_lathe(bm, [(0.66, 0.0), (0.69, 0.22), (0.66, 0.46), (0.56, 0.68), (0.36, 0.84), (0, 0.9)], 24)
+	add_lathe(bm, profile, 24)
 	deform(bm, oval(1.08))
 	part(bm, "Helm")
 
 	bm = bmesh.new()
 	add_lathe(bm, [(0.66, -0.02), (0.75, -0.01), (0.77, 0.07), (0.7, 0.13)], 24, closed=True)
 	deform(bm, oval(1.08))
-	crest = [(0, -math.cos(math.radians(angle)) * 0.75, 0.05 + math.sin(math.radians(angle)) * 0.88) for angle in range(20, 161, 20)]
-	add_sweep(bm, crest, [0.04, 0.06, 0.065, 0.07, 0.07, 0.065, 0.06, 0.04], smoothness=2)
-	add_sweep(bm, [(0, -0.77, 0.06), (0, -0.79, -0.12), (0, -0.76, -0.3)], [0.07, 0.055, 0.03], flatten=0.5)
+	crest = [(0, -radius * 1.08, height) for radius, height in profile[1:-1]]
+	crest = crest + [(0, 0, profile[-1][1])] + [(0, -y, z) for _, y, z in crest[::-1]]
+	add_sweep(bm, crest, [0.045, 0.06, 0.065, 0.07, 0.07, 0.065, 0.06, 0.045, 0.045][:len(crest)], smoothness=2)
 	for side in (-1, 1):
 		add_ball(bm, (side * 0.72, 0.05, 0.38), 0.085)
 	part(bm, "Trim")
@@ -474,25 +504,22 @@ def build_sky_valkyrie_helm(part):
 	add_cabochon(bm, (0, -0.73, 0.34), 0.085, 0.07, direction=(0, -1, 0))
 	part(bm, "Gem", GEM_SMOOTH_ANGLE)
 
+	top = [(0, 0), (0.02, 0.4), (0.22, 0.8), (0.55, 1.02)]
+	tips = [(0.55, 1.02), (0.68, 0.78), (0.68, 0.54), (0.58, 0.32), (0.4, 0.14), (0.16, 0.0), (0, 0)]
+	outline = wing_outline(top, tips, 0.1, steps=4)
 	bm = bmesh.new()
-	feathers = [(30, 0.7, 0.16), (54, 0.88, 0.17), (78, 0.82, 0.17), (102, 0.6, 0.15)]
 	for side in (-1, 1):
-		for index, (angle, length, width) in enumerate(feathers):
-			direction = Vector((math.cos(math.radians(angle)), math.sin(math.radians(angle))))
-			spine = [Vector((0, 0)), direction * length * 0.5 + Vector((0.05, 0.03)), direction * length]
-			matrix = (
-				Matrix.Translation((side * 0.74, 0.05, 0.38))
-				@ Matrix.Rotation(math.radians(90 - side * 15), 4, "Z")
-				@ Matrix.Translation((0, (index % 2) * 0.016 - 0.008, 0))
-			)
-			add_feather(bm, spine, width, matrix)
+		wing_matrix = Matrix.Translation((side * 0.74, 0.05, 0.36)) @ Matrix.Rotation(math.radians(90 - side * 15), 4, "Z")
+		for scale, depth in ((1, 0), (0.62, 0.05)):
+			layer = [point * scale for point in outline]
+			add_plate(bm, layer, None, 0.014, matrix=wing_matrix @ Matrix.Translation((0, -side * depth, 0)))
 	part(bm, "Wing")
 
 	return {
 		"attachment": "Hat",
 		"effects": {
 			"Helm": {"gradient": (0, 0.9, [(0, "7F90BE"), (1, "C3D0F0")])},
-			"Wing": {"gradient": (0.35, 1.3, [(0, "B9CCFF"), (1, "FFFFFF")])},
+			"Wing": {"gradient": (0.35, 1.35, [(0, "B9CCFF"), (1, "FFFFFF")])},
 		},
 	}
 
@@ -513,19 +540,20 @@ def build_starry_witch_hat(part):
 	deform(bm, shape_brim)
 	part(bm, "Hat")
 
-	pivot = Vector((0, 0, 1.15))
+	pivot = Vector((0, 0, 1.0))
 
 	def shape_cone(co):
-		wrinkle = 1 + 0.035 * math.sin(co.z * 16) * clamp((co.z - 0.6) / 0.4)
+		wrinkle = 1 + 0.022 * math.sin(co.z * 14) * clamp((co.z - 0.6) / 0.4)
 		co.x *= wrinkle
 		co.y *= wrinkle
 		if co.z > pivot.z:
-			bend = math.radians(70) * ((co.z - pivot.z) / 0.95) ** 1.6
+			bend = math.radians(66) * ((co.z - pivot.z) / 1.1) ** 1.8
 			co = pivot + Matrix.Rotation(bend, 3, "Y") @ (co - pivot)
 		return co
 
 	bm = bmesh.new()
-	add_lathe(bm, [(0.6, 0.4), (0.6, 0.6), (0.5, 0.9), (0.38, 1.2), (0.26, 1.5), (0.15, 1.78), (0.06, 2.0), (0, 2.1)], 20)
+	cone = [(0.6, 0.4), (0.6, 0.6), (0.53, 0.82), (0.45, 1.02), (0.38, 1.2), (0.31, 1.36), (0.25, 1.52), (0.19, 1.66), (0.13, 1.8), (0.08, 1.93), (0.04, 2.03), (0, 2.1)]
+	add_lathe(bm, cone, 18)
 	deform(bm, shape_cone)
 	part(bm, "Hat")
 
@@ -563,7 +591,7 @@ def build_royal_crown(part):
 	def shape_crown(co):
 		angle = math.atan2(co.y, co.x)
 		rise = clamp((co.z - 0.5) / 0.24)
-		spike = (0.5 + 0.5 * math.cos(points * (angle + phase))) ** 3
+		spike = (0.5 + 0.5 * math.cos(points * (angle + phase))) ** 2
 		co.z += 0.32 * spike * rise ** 1.5
 		co.y *= 1.05
 		return co
@@ -617,19 +645,19 @@ def build_frog_bucket_hat(part):
 	add_lathe(brim, [(0.6, 0.43), (0.88, 0.3), (0.95, 0.26), (0.93, 0.235), (0.86, 0.255), (0.6, 0.39)], 24, closed=True)
 	deform(brim, oval(1.08))
 	for side in (-1, 1):
-		add_ball(bm, (side * 0.25, -0.22, 0.86), 0.2, segments=12, rings=8)
+		add_ball(bm, (side * 0.25, -0.2, 0.86), 0.21, segments=12, rings=8)
 	part(bm, "Frog")
 	part(brim, "Frog")
 
 	bm = bmesh.new()
 	for side in (-1, 1):
-		add_ball(bm, (side * 0.25, -0.3, 0.93), 0.15, segments=12, rings=8)
-		add_ball(bm, (side * 0.25 + 0.035, -0.47, 1.0), 0.025, segments=6, rings=4)
+		add_ball(bm, (side * 0.25, -0.33, 0.89), 0.14, segments=12, rings=8)
+		add_ball(bm, (side * 0.25 + 0.035, -0.5, 0.93), 0.024, segments=6, rings=4)
 	part(bm, "Eye")
 
 	bm = bmesh.new()
 	for side in (-1, 1):
-		add_ball(bm, (side * 0.25, -0.42, 0.96), 0.07, (1, 0.6, 1), segments=10, rings=6)
+		add_ball(bm, (side * 0.25, -0.46, 0.9), 0.065, (1, 0.5, 1), segments=10, rings=6)
 	part(bm, "Pupil")
 
 	bm = bmesh.new()
@@ -638,13 +666,13 @@ def build_frog_bucket_hat(part):
 	part(bm, "Cheek")
 
 	bm = bmesh.new()
-	add_sweep(bm, [(-0.13, -0.68, 0.63), (0, -0.7, 0.58), (0.13, -0.68, 0.63)], [0.016, 0.018, 0.016])
+	add_sweep(bm, [(-0.12, -0.672, 0.63), (0, -0.69, 0.585), (0.12, -0.672, 0.63)], [0.011, 0.013, 0.011])
 	part(bm, "Mouth")
 
 	return {
 		"attachment": "Hat",
 		"effects": {
-			"Frog": {"gradient": (0.25, 1.05, [(0, "5FAE3E"), (1, "A2E36E")]), "patterns": [("stars", "4E9A35", 4, 0.6)]},
+			"Frog": {"gradient": (0.25, 1.05, [(0, "5FAE3E"), (1, "A2E36E")]), "patterns": [("stars", "B2E886", 4, 0.8)]},
 		},
 	}
 
@@ -664,9 +692,13 @@ def build_cat_ears_headband(part):
 		base = Vector((side * math.cos(angle) * 0.64, 0, 0.02 + math.sin(angle) * 0.66 - 0.03))
 		tilt = Matrix.Translation(base) @ Matrix.Rotation(math.radians(side * 28), 4, "Y")
 		outline, plateau = profile_shape([(0, 0), (0.03, 0.22), (0, 0.42)], [(0, 0.2), (0.55, 0.12), (1, 0)], chamfer=0.05)
-		add_plate(ears, outline, plateau, 0.02, 0.06, tilt)
+		ear_verts = add_plate(ears, outline, plateau, 0.02, 0.06)
 		outline, plateau = profile_shape([(0, 0.06), (0.02, 0.22), (0, 0.36)], [(0, 0.12), (0.55, 0.075), (1, 0)], chamfer=0.03)
-		add_plate(inner, outline, plateau, 0.01, 0.03, Matrix.Translation((0, -0.05, 0)) @ tilt)
+		inner_verts = add_plate(inner, outline, plateau, 0.01, 0.03, Matrix.Translation((0, -0.05, 0)))
+		for target, verts in ((ears, ear_verts), (inner, inner_verts)):
+			for vert in verts:
+				vert.co.y -= 2.4 * vert.co.x ** 2
+			bmesh.ops.transform(target, matrix=tilt, verts=verts)
 	part(ears, "Fur", subdivide=1)
 	part(inner, "InnerEar", subdivide=1)
 
@@ -687,20 +719,6 @@ def build_cat_ears_headband(part):
 
 #// 07 Angel Wings
 
-def wing_outline(top, tips, bulge):
-	# Top edge as a smooth curve, bottom edge made of rounded feather tips.
-	outline = catmull_rom(top, 4)
-	center = sum((Vector(point) for point in top + tips), Vector((0, 0))) / len(top + tips)
-	for start, end in zip(tips, tips[1:]):
-		start, end = Vector(start), Vector(end)
-		middle = (start + end) / 2
-		control = middle + (middle - center).normalized() * bulge
-		for step in range(5):
-			t = step / 5
-			outline.append((1 - t) ** 2 * start + 2 * (1 - t) * t * control + t ** 2 * end)
-	return simplify(outline)
-
-
 def build_angel_wings(part):
 	top = [(0, 0.05), (0.5, 0.45), (1.1, 0.7), (1.6, 0.62)]
 	tips = [(1.6, 0.62), (1.56, 0.26), (1.38, -0.06), (1.14, -0.32), (0.86, -0.5), (0.57, -0.56), (0.3, -0.5), (0.06, -0.3), (0, 0.05)]
@@ -709,10 +727,12 @@ def build_angel_wings(part):
 
 	bm = bmesh.new()
 	for side in (-1, 1):
-		wing_matrix = Matrix.Translation((side * 0.25, 0.62, 0.5)) @ Matrix.Diagonal((side, 1, 1, 1)) @ Matrix.Rotation(math.radians(20), 4, "Z")
-		for layer, (scale, depth) in enumerate(((1, 0), (0.68, 0.035), (0.4, 0.07))):
+		wing_matrix = Matrix.Translation((side * 0.2, 0.54, 0.5)) @ Matrix.Diagonal((side, 1, 1, 1)) @ Matrix.Rotation(math.radians(12), 4, "Z")
+		for scale, depth in ((1, 0), (0.68, 0.05), (0.4, 0.1)):
 			layer_outline = [root + (point - root) * scale for point in outline]
-			add_plate(bm, layer_outline, None, 0.018, matrix=wing_matrix @ Matrix.Translation((0, depth, 0)))
+			add_plate(bm, layer_outline, None, 0.014, matrix=wing_matrix @ Matrix.Translation((0, depth, 0)))
+		add_ball(bm, (side * 0.2, 0.56, 0.53), 0.1, (1, 1.1, 1.2))
+	deform(bm, curve_back(0.22, 0.3))
 	part(bm, "Angel")
 
 	return {
@@ -742,7 +762,7 @@ def build_cute_bat_wings(part):
 	membrane = bmesh.new()
 	bones = bmesh.new()
 	for side in (-1, 1):
-		wing_matrix = Matrix.Translation((side * 0.3, 0.62, 0.6)) @ Matrix.Diagonal((side, 1, 1, 1)) @ Matrix.Rotation(math.radians(20), 4, "Z")
+		wing_matrix = Matrix.Translation((side * 0.22, 0.54, 0.6)) @ Matrix.Diagonal((side, 1, 1, 1)) @ Matrix.Rotation(math.radians(12), 4, "Z")
 		add_plate(membrane, outline, None, 0.014, matrix=wing_matrix)
 		add_sweep(bones, top, [0.07, 0.06, 0.055, 0.04, 0.02], sides=5, smoothness=3, matrix=wing_matrix)
 		for finger in fingers[1:4]:
@@ -750,12 +770,16 @@ def build_cute_bat_wings(part):
 		claw_base = wing_matrix @ Vector((elbow.x, 0, elbow.y + 0.04))
 		claw_direction = wing_matrix.to_3x3() @ Vector((0.25, 0, 1))
 		add_spike(bones, claw_base, claw_direction, 0.16, 0.04)
+	for side in (-1, 1):
+		add_ball(bones, (side * 0.22, 0.53, 0.66), 0.08, (1, 0.7, 1.1))
+	deform(membrane, curve_back(0.22, 0.3))
+	deform(bones, curve_back(0.22, 0.3))
 	part(membrane, "Membrane")
 	part(bones, "Bone")
 
 	bm = bmesh.new()
 	heart = heart_shape(0.2, steps=28)
-	add_plate(bm, heart, [point * 0.6 for point in heart], 0.03, 0.06, Matrix.Translation((0, 0.6, 0.55)))
+	add_plate(bm, heart, [point * 0.6 for point in heart], 0.03, 0.06, Matrix.Translation((0, 0.56, 0.62)))
 	part(bm, "Heart")
 
 	return {
@@ -1025,7 +1049,7 @@ def build_accessory(name, build, collection, outline_material):
 	bpy.ops.uv.smart_project(angle_limit=math.radians(66), island_margin=UV_MARGIN, scale_to_bounds=True)
 	bpy.ops.object.mode_set(mode="OBJECT")
 	for loop in accessory.data.uv_layers.active.data:
-		loop.uv.x = OUTLINE_STRIP + loop.uv.x * (1 - OUTLINE_STRIP)
+		loop.uv.x = OUTLINE_STRIP + OUTLINE_STRIP_GAP + loop.uv.x * (1 - OUTLINE_STRIP - OUTLINE_STRIP_GAP)
 
 	bpy.ops.object.bake(type="EMIT")
 
