@@ -40,6 +40,13 @@ OUTLINE_TOLERANCE = 0.006  # points closer than this to a straight line are remo
 PROFILE_SAMPLES_PER_UNIT = 5
 BLADE_EDGE_THICKNESS = 0.02
 BLADE_CENTER_THICKNESS = 0.1
+GRIP_THICKNESS = 1.4  # scales every grip, pommel and grip collar
+GUARD_THICKNESS = 1.45  # scales every swept guard arm, horn and curl
+
+#// Outline
+
+OUTLINE_THICKNESS = 0.022  # inverted hull made by a Solidify modifier with flipped normals
+OUTLINE_COLOR = "0B0710"
 
 # Leave empty to skip. Otherwise every sword is exported as FBX + PNG into this folder.
 EXPORT_FOLDER = os.path.join(os.path.dirname(bpy.data.filepath), "Export") if bpy.data.filepath else ""
@@ -401,6 +408,7 @@ def add_torus(bm, radius, thickness, segments, sides, matrix=Matrix()):
 def add_sweep(bm, points, radii, sides=6, flatten=1.0, smoothness=4, matrix=Matrix()):
 	# Tube along a path given as (x, z) points. A radius of 0 ends the tube in a point.
 	points = [Vector((point[0], 0, point[1])) if len(point) == 2 else Vector(point) for point in points]
+	radii = [radius * GUARD_THICKNESS for radius in radii]
 	path = catmull_rom(points, smoothness) + [points[-1]]
 	path_radii = []
 	for index in range(len(path)):
@@ -469,7 +477,13 @@ def add_cabochon(bm, center, radius, depth, sides=8):
 	add_lathe(bm, profile, sides, oriented(center, (0, 1, 0)))
 
 
+def add_pommel(bm, profile, sides=8):
+	add_lathe(bm, [(radius * GRIP_THICKNESS, height) for radius, height in profile], sides)
+
+
 def add_grip(bm, top, length, radius, wrap_radius, wraps, sides=8):
+	radius *= GRIP_THICKNESS
+	wrap_radius *= GRIP_THICKNESS
 	wrap_length = length / wraps
 	height = top
 	profile = []
@@ -504,7 +518,7 @@ def build_wooden_sword(part):
 	bm = bmesh.new()
 	add_box(bm, (0.9, 0.22, 0.16), (0, 0, 0.06), 0.035)
 	bottom = -0.02 - 0.7
-	add_lathe(bm, [(0.05, bottom + 0.01), (0.1, bottom - 0.03), (0.1, bottom - 0.09), (0.06, bottom - 0.13), (0, bottom - 0.14)], 8)
+	add_pommel(bm, [(0.05, bottom + 0.01), (0.1, bottom - 0.03), (0.1, bottom - 0.09), (0.06, bottom - 0.13), (0, bottom - 0.14)])
 	part(bm, "WoodDark")
 
 	bm = bmesh.new()
@@ -556,7 +570,7 @@ def build_rusty_sword(part):
 	bm = bmesh.new()
 	add_sweep(bm, [(-0.46, -0.02), (-0.25, 0.05), (0, 0.07), (0.25, 0.06), (0.44, 0.1)], [0.055, 0.06, 0.07, 0.06, 0.05], sides=4)
 	bottom = -0.74
-	add_lathe(bm, [(0.05, bottom + 0.01), (0.11, bottom - 0.02), (0.11, bottom - 0.09), (0.05, bottom - 0.12)], 8)
+	add_pommel(bm, [(0.05, bottom + 0.01), (0.11, bottom - 0.02), (0.11, bottom - 0.09), (0.05, bottom - 0.12)])
 	part(bm, "Iron")
 
 	bm = bmesh.new()
@@ -591,10 +605,10 @@ def build_iron_sword(part):
 	bm = bmesh.new()
 	add_sweep(bm, [(-0.58, 0.16), (-0.3, 0.07), (0, 0.05), (0.3, 0.07), (0.58, 0.16)], [0.045, 0.06, 0.08, 0.06, 0.045])
 	for side in (-1, 1):
-		add_ball(bm, (side * 0.6, 0, 0.18), 0.07)
+		add_ball(bm, (side * 0.62, 0, 0.18), 0.095)
 	add_box(bm, (0.3, 0.22, 0.2), (0, 0, 0.07), 0.03)
 	bottom = -0.04 - 0.75
-	add_lathe(bm, [(0.05, bottom + 0.01), (0.09, bottom - 0.02), (0.1, bottom - 0.07), (0.08, bottom - 0.12), (0, bottom - 0.15)], 8)
+	add_pommel(bm, [(0.05, bottom + 0.01), (0.09, bottom - 0.02), (0.1, bottom - 0.07), (0.08, bottom - 0.12), (0, bottom - 0.15)])
 	part(bm, "DarkSteel")
 
 	bm = bmesh.new()
@@ -632,15 +646,15 @@ def build_knight_sword(part):
 		[0.04, 0.055, 0.07, 0.08, 0.07, 0.055, 0.04],
 	)
 	for side in (-1, 1):
-		add_ball(bm, (side * 0.8, 0, -0.08), 0.065)
+		add_ball(bm, (side * 0.82, 0, -0.08), 0.09)
 	add_box(bm, (0.34, 0.2, 0.34), (0, 0, 0.14), 0.04)
 	bottom = -0.03 - 0.8
-	add_lathe(bm, [(0.05, bottom + 0.01), (0.1, bottom - 0.02), (0.12, bottom - 0.08), (0.1, bottom - 0.14), (0.05, bottom - 0.17), (0, bottom - 0.18)], 8)
+	add_pommel(bm, [(0.05, bottom + 0.01), (0.1, bottom - 0.02), (0.12, bottom - 0.08), (0.1, bottom - 0.14), (0.05, bottom - 0.17), (0, bottom - 0.18)])
 	part(bm, "Gold")
 
 	bm = bmesh.new()
 	add_cabochon(bm, (0, 0, 0.14), 0.09, 0.14)
-	add_cabochon(bm, (0, 0, bottom - 0.08), 0.05, 0.14)
+	add_cabochon(bm, (0, 0, bottom - 0.08), 0.05, 0.2)
 	part(bm, "Sapphire")
 
 	bm = bmesh.new()
@@ -742,9 +756,9 @@ def build_cleaver_sword(part):
 		spike_roots.append((root, Vector((side * math.cos(spike_angle * 1.6), 0, math.sin(spike_angle * 1.6)))))
 
 	grip_top = 0.11
-	add_lathe(bm, [(0.06, grip_top - 0.03), (0.095, grip_top - 0.01), (0.095, grip_top + 0.04), (0.05, grip_top + 0.07)], 8)
+	add_pommel(bm, [(0.06, grip_top - 0.03), (0.095, grip_top - 0.01), (0.095, grip_top + 0.04), (0.05, grip_top + 0.07)])
 	bottom = grip_top - 0.7
-	add_lathe(bm, [
+	add_pommel(bm, [
 		(0.05, bottom + 0.02),
 		(0.095, bottom - 0.01),
 		(0.095, bottom - 0.05),
@@ -752,7 +766,7 @@ def build_cleaver_sword(part):
 		(0.068, bottom - 0.12),
 		(0.05, bottom - 0.17),
 		(0, bottom - 0.19),
-	], 8)
+	])
 	add_torus(bm, 0.055, 0.018, 10, 6, Matrix.Translation((0, 0, bottom - 0.24)))
 	part(bm, "Gold")
 
@@ -808,7 +822,7 @@ def build_crystal_sword(part):
 	add_sweep(bm, mirror(arm), radii)
 	add_box(bm, (0.32, 0.22, 0.24), (0, 0, 0.12), 0.04)
 	bottom = -0.8
-	add_lathe(bm, [(0.05, bottom + 0.01), (0.1, bottom - 0.03), (0.1, bottom - 0.09), (0.05, bottom - 0.12)], 8)
+	add_pommel(bm, [(0.05, bottom + 0.01), (0.1, bottom - 0.03), (0.1, bottom - 0.09), (0.05, bottom - 0.12)])
 	part(bm, "Silver")
 
 	bm = bmesh.new()
@@ -856,9 +870,9 @@ def build_flame_sword(part):
 	radii = [0.09, 0.075, 0.055, 0.03, 0.0]
 	add_sweep(bm, horn, radii)
 	add_sweep(bm, mirror(horn), radii)
-	add_box(bm, (0.32, 0.22, 0.22), (0, 0, 0.1), 0.04)
+	add_box(bm, (0.32, 0.22, 0.27), (0, 0, 0.1), 0.04)
 	bottom = -0.8
-	add_lathe(bm, [(0.05, bottom + 0.01), (0.1, bottom - 0.03), (0.1, bottom - 0.09), (0.05, bottom - 0.12)], 8)
+	add_pommel(bm, [(0.05, bottom + 0.01), (0.1, bottom - 0.03), (0.1, bottom - 0.09), (0.05, bottom - 0.12)])
 	part(bm, "DarkIron")
 
 	bm = bmesh.new()
@@ -902,7 +916,7 @@ def build_flame_sword(part):
 #// 09 Frost Sword (Legendary)
 
 def build_frost_sword(part):
-	blade_base = 0.24
+	blade_base = 0.22
 	teeth = [(0.2, 1), (0.28, -1), (0.4, 1), (0.48, -1), (0.6, 1), (0.68, -1), (0.8, 1)]
 	outline, plateau = profile_shape(
 		[(0, blade_base), (0, blade_base + 3.1)],
@@ -926,7 +940,7 @@ def build_frost_sword(part):
 
 	bm = bmesh.new()
 	add_box(bm, (0.36, 0.24, 0.26), (0, 0, 0.12), 0.05)
-	add_lathe(bm, [(0.05, bottom + 0.01), (0.1, bottom - 0.03), (0.1, bottom - 0.09), (0.05, bottom - 0.12)], 8)
+	add_pommel(bm, [(0.05, bottom + 0.01), (0.1, bottom - 0.03), (0.1, bottom - 0.09), (0.05, bottom - 0.12)])
 	part(bm, "FrostMetal")
 
 	bm = bmesh.new()
@@ -993,13 +1007,13 @@ def build_demon_sword(part):
 	add_sweep(bm, mirror(horn), radii)
 	add_box(bm, (0.34, 0.24, 0.3), (0, 0, 0.1), 0.05)
 	bottom = -0.85
-	add_lathe(bm, [(0.05, bottom + 0.01), (0.1, bottom - 0.03), (0.1, bottom - 0.08), (0.06, bottom - 0.11)], 8)
+	add_pommel(bm, [(0.05, bottom + 0.01), (0.1, bottom - 0.03), (0.1, bottom - 0.08), (0.06, bottom - 0.11)])
 	add_spike(bm, (0, 0, bottom - 0.1), (0, 0, -1), 0.3, 0.07)
 	part(bm, "DemonMetal")
 
 	bm = bmesh.new()
 	add_cabochon(bm, (0, 0, 0.1), 0.1, 0.17)
-	add_cabochon(bm, (0, 0, bottom - 0.05), 0.045, 0.12)
+	add_cabochon(bm, (0, 0, bottom - 0.05), 0.045, 0.17)
 	part(bm, "DemonEye")
 
 	bm = bmesh.new()
@@ -1046,9 +1060,9 @@ def build_celestial_sword(part):
 	add_sweep(bm, arm, radii)
 	add_sweep(bm, mirror(arm), radii)
 	add_box(bm, (0.36, 0.24, 0.3), (0, 0, 0.12), 0.05)
-	add_lathe(bm, [(0.06, -0.05), (0.09, -0.03), (0.09, 0.02), (0.06, 0.04)], 8)
+	add_pommel(bm, [(0.06, -0.05), (0.09, -0.03), (0.09, 0.02), (0.06, 0.04)])
 	bottom = -0.85
-	add_lathe(bm, [(0.06, bottom + 0.04), (0.09, bottom + 0.02), (0.11, bottom - 0.04), (0.08, bottom - 0.1), (0.05, bottom - 0.12)], 8)
+	add_pommel(bm, [(0.06, bottom + 0.04), (0.09, bottom + 0.02), (0.11, bottom - 0.04), (0.08, bottom - 0.1), (0.05, bottom - 0.12)])
 	part(bm, "Gold")
 
 	bm = bmesh.new()
@@ -1123,7 +1137,7 @@ VOID_RUNES = [
 
 
 def build_void_king_sword(part):
-	blade_base = 0.32
+	blade_base = 0.2
 	spine = [(0, blade_base), (0, blade_base + 4.0)]
 	stations = [(0, 0.28), (0.06, 0.36), (0.25, 0.32), (0.45, 0.38), (0.6, 0.34), (0.72, 0.46), (0.78, 0.42), (1, 0)]
 	teeth = [(0.18, 1), (0.22, -1), (0.38, 1), (0.42, -1), (0.56, 1), (0.6, -1), (0.75, 1), (0.77, -1)]
@@ -1135,7 +1149,7 @@ def build_void_king_sword(part):
 	rim, rim_plateau = profile_shape(spine, [(t, width + 0.08) for t, width in stations], chamfer=0.04, plateau_ratio=0.5)
 	bm = bmesh.new()
 	add_plate(bm, rim, rim_plateau, 0.006, 0.016)
-	add_torus(bm, 0.62, 0.03, 28, 6, Matrix.Translation((0, 0, blade_base + 1.2)) @ Matrix.Rotation(math.radians(64), 4, "X"))
+	add_torus(bm, 0.62, 0.03, 28, 6, Matrix.Translation((0, 0, blade_base + 1.3)) @ Matrix.Rotation(math.radians(64), 4, "X"))
 	part(bm, "VoidGlow")
 
 	bm = bmesh.new()
@@ -1146,22 +1160,24 @@ def build_void_king_sword(part):
 		((0.68, 0, 3.45), (0.2, 0, 1), 0.28, 0.05),
 	):
 		add_crystal(bm, position, direction, length, radius)
-	add_gem(bm, (0, 0, 0.12), 0.1, 0.15)
+	add_cabochon(bm, (0, 0, 0.04), 0.11, 0.2)
 	bottom = -1.0
 	add_crystal(bm, (0, 0, bottom - 0.12), (0, 0, -1), 0.38, 0.08)
 	part(bm, "VoidCyan", CRYSTAL_SMOOTH_ANGLE)
 
 	bm = bmesh.new()
 	add_sweep(bm, [(-0.85, 0.22), (-0.5, 0.08), (0, 0.04), (0.5, 0.08), (0.85, 0.22)], [0.06, 0.09, 0.11, 0.09, 0.06])
-	add_torus(bm, 0.19, 0.045, 16, 6, Matrix.Translation((0, 0, 0.12)))
+	for y in (-0.14, 0.14):
+		add_torus(bm, 0.14, 0.035, 16, 6, Matrix.Translation((0, y, 0.04)))
+	add_box(bm, (0.76, 0.26, 0.16), (0, 0, 0.2), 0.04)
 	for x, angle in ((-0.62, -32), (-0.42, -16), (0.42, 16), (0.62, 32)):
 		direction = Vector((math.sin(math.radians(angle)), 0, math.cos(math.radians(angle))))
 		root = Vector((x, 0, 0.12 + abs(x) * 0.12))
 		add_spike(bm, root, direction, 0.42, 0.06, sides=4)
 		add_ball(bm, root + direction * 0.44, 0.04)
-	add_lathe(bm, [(0.06, -0.04), (0.1, -0.02), (0.1, 0.03), (0.06, 0.05)], 8)
-	add_lathe(bm, [(0.06, -0.5), (0.088, -0.48), (0.088, -0.44), (0.06, -0.42)], 8)
-	add_lathe(bm, [(0.05, bottom + 0.04), (0.12, bottom), (0.12, bottom - 0.07), (0.06, bottom - 0.12)], 8)
+	add_pommel(bm, [(0.06, -0.04), (0.1, -0.02), (0.1, 0.03), (0.06, 0.05)])
+	add_pommel(bm, [(0.06, -0.5), (0.088, -0.48), (0.088, -0.44), (0.06, -0.42)])
+	add_pommel(bm, [(0.05, bottom + 0.04), (0.12, bottom), (0.12, bottom - 0.07), (0.06, bottom - 0.12)])
 	for direction in ((1, 0, -0.4), (-1, 0, -0.4), (0, 1, -0.4), (0, -1, -0.4)):
 		add_spike(bm, (0, 0, bottom - 0.04), direction, 0.2, 0.035, sides=4)
 	part(bm, "Gold")
@@ -1451,6 +1467,50 @@ def create_final_material(name, texture):
 	return material
 
 
+def create_outline_material():
+	# Black inverted hull. Backface culling hides the shell in the viewport and in Roblox,
+	# the backfacing mix does the same for Cycles renders.
+	material = bpy.data.materials.new("Outline")
+	material.use_nodes = True
+	material.use_backface_culling = True
+	material.diffuse_color = to_color(OUTLINE_COLOR)
+	nodes = material.node_tree.nodes
+	links = material.node_tree.links
+	nodes.clear()
+
+	geometry = nodes.new("ShaderNodeNewGeometry")
+	light_path = nodes.new("ShaderNodeLightPath")
+	not_camera = nodes.new("ShaderNodeMath")
+	not_camera.operation = "SUBTRACT"
+	not_camera.inputs[0].default_value = 1
+	links.new(light_path.outputs["Is Camera Ray"], not_camera.inputs[1])
+	hide = nodes.new("ShaderNodeMath")
+	hide.operation = "MAXIMUM"
+	links.new(geometry.outputs["Backfacing"], hide.inputs[0])
+	links.new(not_camera.outputs[0], hide.inputs[1])
+	color = nodes.new("ShaderNodeEmission")
+	color.inputs["Color"].default_value = to_color(OUTLINE_COLOR)
+	hidden = nodes.new("ShaderNodeBsdfTransparent")
+	shader = nodes.new("ShaderNodeMixShader")
+	output = nodes.new("ShaderNodeOutputMaterial")
+	links.new(hide.outputs[0], shader.inputs[0])
+	links.new(color.outputs[0], shader.inputs[1])
+	links.new(hidden.outputs[0], shader.inputs[2])
+	links.new(shader.outputs[0], output.inputs["Surface"])
+	return material
+
+
+def add_outline(target, material):
+	target.data.materials.append(material)
+	modifier = target.modifiers.new("Outline", "SOLIDIFY")
+	modifier.thickness = OUTLINE_THICKNESS
+	modifier.offset = 1
+	modifier.use_flip_normals = True
+	modifier.use_quality_normals = True
+	modifier.use_rim = False
+	modifier.material_offset = 1
+
+
 #// Build
 
 def clear_scene():
@@ -1494,7 +1554,7 @@ def separate_glow(sword, name):
 	return glow_parts
 
 
-def build_sword(name, rarity, build, collection):
+def build_sword(name, rarity, build, collection, outline_material):
 	parts = []
 
 	def part(bm, key, smooth_angle=SMOOTH_ANGLE):
@@ -1554,6 +1614,7 @@ def build_sword(name, rarity, build, collection):
 		collection.objects.link(target)
 		if target != sword:
 			target.parent = sword
+		add_outline(target, outline_material)
 
 	return sword, texture
 
@@ -1565,14 +1626,43 @@ def export_sword(sword, texture):
 
 	original_location = sword.location.copy()
 	sword.location = (0, 0, 0)
-	select_only([sword] + list(sword.children))
+	bpy.context.view_layer.update()
+
+	# Roblox gets the outline shells as one extra mesh, set it to black SmoothPlastic there.
+	depsgraph = bpy.context.evaluated_depsgraph_get()
+	bm = bmesh.new()
+	for target in [sword] + list(sword.children):
+		evaluated_mesh = bpy.data.meshes.new_from_object(target.evaluated_get(depsgraph))
+		evaluated_mesh.transform(target.matrix_world)
+		bm.from_mesh(evaluated_mesh)
+		bpy.data.meshes.remove(evaluated_mesh)
+	bmesh.ops.delete(bm, geom=[face for face in bm.faces if face.material_index == 0], context="FACES")
+	for face in bm.faces:
+		face.material_index = 0
+	outline_mesh = bpy.data.meshes.new(sword.name + "Outline")
+	bm.to_mesh(outline_mesh)
+	bm.free()
+	outline_mesh.materials.append(bpy.data.materials["Outline"])
+	outline = bpy.data.objects.new(sword.name + "Outline", outline_mesh)
+	bpy.context.scene.collection.objects.link(outline)
+
+	parts = [sword] + list(sword.children)
+	for target in parts:
+		target.data.materials.pop()
+
+	select_only(parts + [outline])
 	bpy.ops.export_scene.fbx(
 		filepath=os.path.join(EXPORT_FOLDER, sword.name + ".fbx"),
 		use_selection=True,
 		object_types={"MESH"},
+		use_mesh_modifiers=False,
 		path_mode="COPY",
 		embed_textures=True,
 	)
+	for target in parts:
+		target.data.materials.append(bpy.data.materials["Outline"])
+	bpy.data.objects.remove(outline)
+	bpy.data.meshes.remove(outline_mesh)
 	sword.location = original_location
 
 
@@ -1587,9 +1677,10 @@ def main():
 	collection = bpy.data.collections.new("SwordPack")
 	scene.collection.children.link(collection)
 
+	outline_material = create_outline_material()
 	swords = []
 	for index, (name, rarity, build) in enumerate(SWORDS):
-		sword, texture = build_sword(name, rarity, build, collection)
+		sword, texture = build_sword(name, rarity, build, collection, outline_material)
 		sword.location.x = index * PACK_SPACING
 		swords.append((sword, texture))
 
