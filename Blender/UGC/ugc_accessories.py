@@ -8,9 +8,9 @@ from mathutils import Matrix, Vector
 # Run inside Blender 4.1+: Scripting tab -> Open -> Run Script.
 # Builds a pack of cute, smooth low poly Roblox UGC accessories (hats and back items).
 # Every accessory gets a baked curvature texture where edges turn a lighter shade of their own
-# color, a black inverted hull outline (Solidify + Outline material) and an FBX export.
-# The FBX holds one mesh with one texture, the outline shell included: its UVs point at the black
-# strip on the left edge of the texture, so it stays a valid single MeshPart accessory.
+# color, a separate black inverted hull outline object (<Accessory>Outline) and an FBX export.
+# The outline UVs point at the black strip on the left edge of the texture, so joining it into the
+# accessory (Ctrl+J) gives a single MeshPart with one texture for UGC uploads.
 # Hats are built around a head centered at the origin (top of the head at z = 0.6),
 # back items around a torso centered at the origin (back surface at y = 0.5). Front is -Y.
 
@@ -1007,15 +1007,42 @@ def new_part(name, bm, material, smooth_angle, subdivide):
 	return part
 
 
-def add_outline(target, material):
-	target.data.materials.append(material)
-	modifier = target.modifiers.new("Outline", "SOLIDIFY")
+def create_outline(root, material):
+	# Inverted hull kept as its own black object: a Solidify shell with flipped normals,
+	# without the original surface, parented to the model. Its UVs point at the black strip,
+	# so joining it into the accessory later still renders black with the accessory texture.
+	modifier = root.modifiers.new("Outline", "SOLIDIFY")
 	modifier.thickness = OUTLINE_THICKNESS
 	modifier.offset = 1
 	modifier.use_flip_normals = True
 	modifier.use_quality_normals = True
 	modifier.use_rim = False
-	modifier.material_offset = 1
+	modifier.material_offset = len(root.data.materials)
+	root.data.materials.append(material)
+
+	mesh = bpy.data.meshes.new_from_object(root.evaluated_get(bpy.context.evaluated_depsgraph_get()))
+	root.modifiers.remove(modifier)
+	root.data.materials.pop()
+	bm = bmesh.new()
+	bm.from_mesh(mesh)
+	bmesh.ops.delete(bm, geom=[face for face in bm.faces if face.material_index < len(root.data.materials)], context="FACES")
+	uv_layer = bm.loops.layers.uv.active
+	for face in bm.faces:
+		face.material_index = 0
+		for loop in face.loops:
+			loop[uv_layer].uv = (OUTLINE_STRIP / 2, 0.5)
+	bm.to_mesh(mesh)
+	bm.free()
+	mesh.name = root.name + "Outline"
+	mesh.materials.clear()
+	mesh.materials.append(material)
+
+	outline = bpy.data.objects.new(root.name + "Outline", mesh)
+	for collection in root.users_collection:
+		collection.objects.link(outline)
+	outline.parent = root
+	outline.matrix_parent_inverse = Matrix()
+	return outline
 
 
 def build_accessory(name, build, collection, outline_material):
@@ -1066,7 +1093,7 @@ def build_accessory(name, build, collection, outline_material):
 	for user_collection in list(accessory.users_collection):
 		user_collection.objects.unlink(accessory)
 	collection.objects.link(accessory)
-	add_outline(accessory, outline_material)
+	create_outline(accessory, outline_material)
 
 	return accessory, texture
 
@@ -1076,39 +1103,20 @@ def export_accessory(accessory, texture):
 	texture.file_format = "PNG"
 	texture.save()
 
-	name = accessory.name
 	original_location = accessory.location.copy()
 	accessory.location = (0, 0, 0)
-	accessory.name = name + "Source"
-	bpy.context.view_layer.update()
 
-	# One mesh, one material: the outline shell is kept and sampled from the black strip.
-	mesh = bpy.data.meshes.new_from_object(accessory.evaluated_get(bpy.context.evaluated_depsgraph_get()))
-	uvs = mesh.uv_layers.active.data
-	for polygon in mesh.polygons:
-		if polygon.material_index == 1:
-			for loop_index in polygon.loop_indices:
-				uvs[loop_index].uv = (OUTLINE_STRIP / 2, 0.5)
-		polygon.material_index = 0
-	mesh.materials.pop()
-	mesh.name = name
-	export_object = bpy.data.objects.new(name, mesh)
-	bpy.context.scene.collection.objects.link(export_object)
-
-	select_only([export_object])
+	# The outline is its own <Accessory>Outline mesh next to the accessory mesh.
+	select_only([accessory] + list(accessory.children))
 	bpy.ops.export_scene.fbx(
-		filepath=os.path.join(EXPORT_FOLDER, name + ".fbx"),
+		filepath=os.path.join(EXPORT_FOLDER, accessory.name + ".fbx"),
 		use_selection=True,
 		object_types={"MESH"},
-		use_mesh_modifiers=False,
 		axis_forward="Z",
 		axis_up="Y",
 		path_mode="COPY",
 		embed_textures=True,
 	)
-	bpy.data.objects.remove(export_object)
-	bpy.data.meshes.remove(mesh)
-	accessory.name = name
 	accessory.location = original_location
 
 

@@ -10,6 +10,7 @@ from mathutils import Matrix, Vector
 # Every sword gets its own hand-painted curvature texture (edge highlights, cavity shadows, wear,
 # painted decals) baked into one image, auto smooth shading and an FBX export for Roblox.
 # Glowing parts are split into their own mesh named <Sword><Material>, meant to become Neon in Roblox.
+# The black inverted hull outline is a separate object named <Sword>Outline, parented to the sword.
 
 TEXTURE_SIZE = 1024
 BAKE_SAMPLES = 64
@@ -1500,15 +1501,45 @@ def create_outline_material():
 	return material
 
 
-def add_outline(target, material):
-	target.data.materials.append(material)
-	modifier = target.modifiers.new("Outline", "SOLIDIFY")
-	modifier.thickness = OUTLINE_THICKNESS
-	modifier.offset = 1
-	modifier.use_flip_normals = True
-	modifier.use_quality_normals = True
-	modifier.use_rim = False
-	modifier.material_offset = 1
+def create_outline(root, targets, material):
+	# Inverted hull kept as its own black object: a Solidify shell with flipped normals,
+	# without the original surface, parented to the model.
+	bm = bmesh.new()
+	for target in targets:
+		modifier = target.modifiers.new("Outline", "SOLIDIFY")
+		modifier.thickness = OUTLINE_THICKNESS
+		modifier.offset = 1
+		modifier.use_flip_normals = True
+		modifier.use_quality_normals = True
+		modifier.use_rim = False
+		modifier.material_offset = len(target.data.materials)
+		target.data.materials.append(material)
+
+		shell = bpy.data.meshes.new_from_object(target.evaluated_get(bpy.context.evaluated_depsgraph_get()))
+		target.modifiers.remove(modifier)
+		target.data.materials.pop()
+		shell.transform(root.matrix_world.inverted() @ target.matrix_world)
+		shell_bm = bmesh.new()
+		shell_bm.from_mesh(shell)
+		bmesh.ops.delete(shell_bm, geom=[face for face in shell_bm.faces if face.material_index < len(target.data.materials)], context="FACES")
+		shell_bm.to_mesh(shell)
+		shell_bm.free()
+		bm.from_mesh(shell)
+		bpy.data.meshes.remove(shell)
+
+	for face in bm.faces:
+		face.material_index = 0
+	mesh = bpy.data.meshes.new(root.name + "Outline")
+	bm.to_mesh(mesh)
+	bm.free()
+	mesh.materials.append(material)
+
+	outline = bpy.data.objects.new(root.name + "Outline", mesh)
+	for collection in root.users_collection:
+		collection.objects.link(outline)
+	outline.parent = root
+	outline.matrix_parent_inverse = Matrix()
+	return outline
 
 
 #// Build
@@ -1614,7 +1645,7 @@ def build_sword(name, rarity, build, collection, outline_material):
 		collection.objects.link(target)
 		if target != sword:
 			target.parent = sword
-		add_outline(target, outline_material)
+	create_outline(sword, [sword] + glow_parts, outline_material)
 
 	return sword, texture
 
@@ -1626,43 +1657,16 @@ def export_sword(sword, texture):
 
 	original_location = sword.location.copy()
 	sword.location = (0, 0, 0)
-	bpy.context.view_layer.update()
 
-	# Roblox gets the outline shells as one extra mesh, set it to black SmoothPlastic there.
-	depsgraph = bpy.context.evaluated_depsgraph_get()
-	bm = bmesh.new()
-	for target in [sword] + list(sword.children):
-		evaluated_mesh = bpy.data.meshes.new_from_object(target.evaluated_get(depsgraph))
-		evaluated_mesh.transform(target.matrix_world)
-		bm.from_mesh(evaluated_mesh)
-		bpy.data.meshes.remove(evaluated_mesh)
-	bmesh.ops.delete(bm, geom=[face for face in bm.faces if face.material_index == 0], context="FACES")
-	for face in bm.faces:
-		face.material_index = 0
-	outline_mesh = bpy.data.meshes.new(sword.name + "Outline")
-	bm.to_mesh(outline_mesh)
-	bm.free()
-	outline_mesh.materials.append(bpy.data.materials["Outline"])
-	outline = bpy.data.objects.new(sword.name + "Outline", outline_mesh)
-	bpy.context.scene.collection.objects.link(outline)
-
-	parts = [sword] + list(sword.children)
-	for target in parts:
-		target.data.materials.pop()
-
-	select_only(parts + [outline])
+	# The outline is its own <Sword>Outline mesh, set it to black SmoothPlastic in Roblox.
+	select_only([sword] + list(sword.children))
 	bpy.ops.export_scene.fbx(
 		filepath=os.path.join(EXPORT_FOLDER, sword.name + ".fbx"),
 		use_selection=True,
 		object_types={"MESH"},
-		use_mesh_modifiers=False,
 		path_mode="COPY",
 		embed_textures=True,
 	)
-	for target in parts:
-		target.data.materials.append(bpy.data.materials["Outline"])
-	bpy.data.objects.remove(outline)
-	bpy.data.meshes.remove(outline_mesh)
 	sword.location = original_location
 
 
