@@ -215,6 +215,7 @@ PALETTE = {
 	"VolcanoDark": ("3A2A24", "140C0A", "7A5A4A"),
 	"LavaGlow": ("FF6A1E", "A8200E", "FFD27A"),
 	"GolemRock": ("6A5248", "2A1E1A", "A88A7A"),
+	"GolemBoulder": ("6A5248", "2A1E1A", "A88A7A"),
 	"PhoenixFeather": ("FF7A2E", "B8300E", "FFE07A"),
 	"PhoenixWing": ("FF9A3A", "C0400E", "FFE8A0"),
 	"PhoenixGlow": ("FFC23A", "D8600E", "FFF6C0"),
@@ -4289,49 +4290,50 @@ def build_salamander_sword(part):
 #// Magma 06 Volcano Sword (Rare)
 
 def build_volcano_sword(part):
-	blade_base = 0.5
+	blade_base = 0.2
 	length = 2.6
-	outline, plateau = profile_shape(
-		[(0, blade_base), (0, blade_base + length)],
-		[(0, 0.18), (0.08, 0.23), (0.7, 0.22), (0.88, 0.15), (1, 0)],
-		chamfer=0.1,
-	)
+	spine = [(0, blade_base), (0, blade_base + length)]
+	stations = [(0, 0.2), (0.08, 0.26), (0.7, 0.24), (0.88, 0.16), (1, 0)]
+	outline, plateau = profile_shape(spine, stations, chamfer=0.1, features=[(0.4, 1, 0.12, 0.05, 0.3), (0.62, -1, 0.14, 0.05, -0.3)])
 	bm = bmesh.new()
 	add_plate(bm, outline, plateau)
 	part(bm, "VolcanoRock")
 
+	river, river_plateau = profile_shape([(0, blade_base + 0.05), (0.03, blade_base + 0.8), (-0.03, blade_base + 1.5), (0, blade_base + 2.1)], [(0, 0.07), (0.5, 0.05), (1, 0)], chamfer=0.02, plateau_ratio=0.5)
 	bm = bmesh.new()
-	cone = [(0.48, -0.02), (0.44, 0.06), (0.3, 0.32), (0.2, 0.52), (0.22, 0.56), (0.14, 0.5)]
-	add_lathe(bm, cone, 12, Matrix.Diagonal((1, 0.72, 1, 1)))
-	add_lathe(bm, [(0.13, 0.5), (0.13, 0.42), (0, 0.42)], 12, Matrix.Diagonal((1, 0.72, 1, 1)))
-	bottom = -0.04 - 0.74
-	add_rock_chunk(bm, (0, 0, bottom - 0.1), (0.15, 0.13, 0.13), 7)
-	part(bm, "VolcanoDark")
-
-	bm = bmesh.new()
-	for side in (-1, 1):
-		add_flame(bm, Vector((side * 0.1, 0.5)), (side * 0.3, 1), 0.6, 0.11, side)
-		add_flame(bm, Vector((side * 0.16, 0.45)), (side * 0.9, 1), 0.4, 0.08, side)
-	for angle in (0.6, 2.2, 3.8, 5.1):
-		flow = [(math.cos(angle) * 0.2, math.sin(angle) * 0.15, 0.52), (math.cos(angle) * 0.3, math.sin(angle) * 0.22, 0.3), (math.cos(angle) * 0.42, math.sin(angle) * 0.3, 0.06)]
-		add_sweep(bm, flow, [0.04, 0.045, 0.035], sides=5)
+	add_plate(bm, river, river_plateau, 0.105, 0.11)
+	generator = numpy.random.default_rng(3)
+	for index in range(7):
+		angle = generator.uniform(0, math.tau)
+		x = math.cos(angle) * 0.36
+		drip = [(x, -0.06, 0.06), (x * 1.02, -0.07, -0.04), (x * 0.98, -0.06, -0.14 - generator.uniform(0, 0.12))]
+		add_sweep(bm, drip, [0.03, 0.026, 0.0], sides=5)
+	add_ball(bm, (0, -0.15, 0.12), 0.07, (1, 0.5, 1))
+	bottom = 0.0 - 0.76
+	add_ball(bm, (0, 0, bottom - 0.14), 0.07)
 	part(bm, "LavaGlow")
 
 	bm = bmesh.new()
-	add_grip(bm, -0.04, 0.74, 0.062, 0.074, 7)
+	for x, seed, size in ((-0.36, 61, 0.15), (-0.16, 62, 0.17), (0.16, 63, 0.17), (0.36, 64, 0.15), (0.0, 65, 0.18)):
+		add_rock_chunk(bm, (x, 0, 0.1), (size, 0.15, 0.13), seed)
+	add_rock_chunk(bm, (0, 0, bottom - 0.12), (0.15, 0.14, 0.15), 66)
+	part(bm, "VolcanoDark")
+
+	bm = bmesh.new()
+	add_grip(bm, 0.0, 0.76, 0.062, 0.074, 7)
 	part(bm, "DarkLeather")
 
-	river = [[(0, blade_base + 0.1), (0.04, blade_base + 0.6), (-0.03, blade_base + 1.1), (0.03, blade_base + 1.6), (0, blade_base + 2.0)]]
 	return {
 		"blade": "VolcanoRock",
 		"outline": outline,
 		"edge_glow": ("FF5A1E", 0.05),
-		"decals": river + lava_cracks(blade_base + 0.3, blade_base + 2.1, 0.18, 5, 21),
-		"decal_width": 0.028,
+		"decals": lava_cracks(blade_base + 0.3, blade_base + 2.2, 0.2, 6, 21),
+		"decal_width": 0.022,
 		"decal_colors": ("FF6A1E", "FFD27A"),
 		"effects": {
-			"VolcanoRock": {"gradient": (0.5, 3.1, [(0, "3A1E14"), (1, "5A4A44")]), "patterns": [("cells", "2A1E1A", 4, 0.4)]},
-			"VolcanoDark": {"gradient": (-0.1, 0.6, [(0, "2A1E1A"), (1, "5A3A2E")]), "patterns": [("cells", "FF6A1E", 4, 0.3)]},
+			"VolcanoRock": {"gradient": (0.2, 2.8, [(0, "3A1E14"), (1, "5A4A44")]), "patterns": [("cells", "2A1E1A", 4, 0.4), ("stars", "FF8A3A", 9, 0.5)]},
+			"VolcanoDark": {"gradient": (-0.9, 0.3, [(0, "2A1E1A"), (1, "5A3A2E")]), "patterns": [("cells", "FF6A1E", 4, 0.45)]},
+			"LavaGlow": {"gradient": (-0.9, 2.3, [(0, "FF4A0E"), (1, "FFD23A")])},
 		},
 	}
 
@@ -4341,45 +4343,57 @@ def build_volcano_sword(part):
 def build_magma_golem_blade(part):
 	blade_base = 0.42
 	length = 2.9
+	spine = [(0, blade_base), (0, blade_base + length)]
 	outline, plateau = profile_shape(
-		[(0, blade_base), (0, blade_base + length)],
-		[(0, 0.2), (0.08, 0.26), (0.75, 0.25), (0.9, 0.17), (1, 0)],
-		chamfer=0.05,
-		plateau_ratio=0.8,
+		spine,
+		[(0, 0.26), (0.08, 0.32), (0.75, 0.3), (0.9, 0.22), (1, 0.12)],
+		tip=[(1, 0.0), (0.5, 0.1), (-0.3, 0.16), (-1, 0.0)],
+		chamfer=0.12,
+		features=[(0.3, 1, 0.16, 0.06, 0.2), (0.55, -1, 0.18, 0.07, -0.2), (0.78, 1, 0.14, 0.05, 0)],
 	)
 	bm = bmesh.new()
-	add_plate(bm, outline, plateau, 0.02, 0.05)
+	add_plate(bm, outline, plateau, 0.04, 0.14)
+	part(bm, "GolemRock")
+
+	path = catmull_rom([Vector(point) for point in spine], 8) + [Vector(spine[-1])]
+	bm = bmesh.new()
+	for index, (t, side) in enumerate(((0.12, 1), (0.22, -1), (0.42, 1), (0.48, -1), (0.66, -1), (0.7, 1))):
+		center = point_on_path(path, t)
+		add_rock_chunk(bm, (center.x + side * 0.3, 0, center.y), (0.13, 0.17, 0.16), 70 + index)
+	head = Vector((0, 0, 0.22))
+	add_rock_chunk(bm, head, (0.34, 0.26, 0.26), 80)
+	for side in (-1, 1):
+		add_rock_chunk(bm, (side * 0.46, 0, 0.3), (0.2, 0.2, 0.2), 81 + side)
+		add_rock_chunk(bm, (side * 0.56, -0.02, 0.05), (0.15, 0.15, 0.17), 84 + side)
+	bottom = 0.0 - 0.8
+	add_rock_chunk(bm, (0, 0, bottom - 0.12), (0.17, 0.16, 0.16), 88)
+	part(bm, "GolemBoulder")
+
+	bm = bmesh.new()
+	for y in (-1, 1):
+		for side in (-1, 1):
+			add_box(bm, (0.12, 0.08, 0.06), head + Vector((side * 0.13, y * 0.22, 0.06)), 0.02)
+		add_box(bm, (0.24, 0.08, 0.05), head + Vector((0, y * 0.21, -0.1)), 0.02)
+	for side in (-1, 1):
+		add_box(bm, (0.04, 0.3, 0.2), (side * 0.46, 0, 0.3), 0.01)
+	add_box(bm, (0.05, 0.26, 0.16), (0, 0, bottom - 0.12), 0.01)
 	part(bm, "LavaGlow")
 
 	bm = bmesh.new()
-	for index in range(7):
-		z = blade_base + 0.2 + index * 0.37
-		width = 0.3 if index < 5 else 0.24 - (index - 5) * 0.06
-		add_rock_chunk(bm, (0, 0, z), (width, 0.12, 0.19), 30 + index)
-	add_spike(bm, (0, 0, blade_base + 2.55), (0, 0, 1), 0.38, 0.12, sides=5)
-	for side in (-1, 1):
-		add_rock_chunk(bm, (side * 0.42, 0, 0.18), (0.2, 0.18, 0.2), 40 + side)
-		for index in range(3):
-			add_rock_chunk(bm, (side * (0.52 + index * 0.02), -0.12, 0.3 - index * 0.11), (0.06, 0.06, 0.05), 50 + index + side * 5)
-	add_rock_chunk(bm, (0, 0, 0.12), (0.26, 0.2, 0.18), 45)
-	bottom = -0.06 - 0.78
-	add_rock_chunk(bm, (0, 0, bottom - 0.12), (0.17, 0.16, 0.16), 46)
-	part(bm, "GolemRock")
-
-	bm = bmesh.new()
-	for side in (-1, 1):
-		add_ball(bm, (side * 0.09, -0.19, 0.16), 0.045, (1, 0.5, 0.8))
-	part(bm, "EmberGlow")
-
-	bm = bmesh.new()
-	add_grip(bm, -0.06, 0.78, 0.064, 0.077, 7)
+	add_grip(bm, 0.0, 0.8, 0.064, 0.077, 7)
 	part(bm, "DarkLeather")
 
 	return {
-		"blade": "LavaGlow",
+		"blade": "GolemRock",
+		"outline": outline,
+		"edge_glow": ("FF6A1E", 0.06),
+		"decals": lava_cracks(blade_base + 0.3, blade_base + 2.6, 0.24, 7, 51),
+		"decal_width": 0.026,
+		"decal_colors": ("FF6A1E", "FFE07A"),
 		"effects": {
-			"LavaGlow": {"gradient": (0.4, 3.3, [(0, "FF5A1E"), (1, "FFD23A")])},
-			"GolemRock": {"gradient": (-1.0, 3.3, [(0, "2A1E1A"), (1, "6A5248")]), "patterns": [("cells", "FF6A1E", 3.5, 0.35)]},
+			"GolemRock": {"gradient": (0.4, 3.3, [(0, "3A2A24"), (1, "6A5248")]), "patterns": [("cells", "2A1E1A", 4, 0.45)]},
+			"GolemBoulder": {"gradient": (-1.0, 3.0, [(0, "2A1E1A"), (1, "7A6052")]), "patterns": [("cells", "FF6A1E", 3.5, 0.4)]},
+			"LavaGlow": {"gradient": (-1.0, 0.5, [(0, "FF4A0E"), (1, "FFD23A")])},
 		},
 	}
 
@@ -4387,7 +4401,7 @@ def build_magma_golem_blade(part):
 #// Magma 08 Phoenix Feather (Epic)
 
 def build_phoenix_feather(part):
-	blade_base = 0.34
+	blade_base = 0.2
 	spine = [(0, blade_base), (0.04, blade_base + 1.4), (0.16, blade_base + 2.5), (0.3, blade_base + 2.95)]
 	stations = [(0, 0.16), (0.08, 0.24), (0.5, 0.29), (0.8, 0.22), (0.94, 0.1), (1, 0)]
 	notches = [(t, side, 0.1, 0.07, 0.8 * side) for t, side in ((0.35, 1), (0.48, -1), (0.6, 1), (0.72, -1), (0.82, 1))]
@@ -4466,7 +4480,7 @@ def build_inferno_katana(part):
 		tsuba.append(Vector((math.cos(angle) * radius, math.sin(angle) * radius * 0.8)))
 	add_plate(bm, tsuba, [point * 0.7 for point in tsuba], 0.035, 0.05, Matrix.Translation((0, 0, 0.12)) @ Matrix.Rotation(math.radians(90), 4, "X"))
 	add_box(bm, (0.16, 0.14, 0.12), (0, 0, 0.2), 0.03)
-	bottom = -0.04 - 1.0
+	bottom = 0.1 - 1.0
 	add_pommel(bm, [(0.055, bottom + 0.02), (0.075, bottom), (0.075, bottom - 0.05), (0.05, bottom - 0.07)])
 	part(bm, "IronBlack")
 
@@ -4476,12 +4490,12 @@ def build_inferno_katana(part):
 	part(bm, "EmberGlow")
 
 	bm = bmesh.new()
-	add_grip(bm, -0.04, 1.0, 0.058, 0.07, 9)
+	add_grip(bm, 0.1, 1.0, 0.058, 0.07, 9)
 	part(bm, "KatanaWrap")
 
 	bm = bmesh.new()
 	for index in range(9):
-		z = -0.08 - index * 0.111
+		z = 0.06 - index * 0.111
 		add_box(bm, (0.04, 0.2, 0.04), (0, 0, z), 0.01)
 	part(bm, "Gold")
 
@@ -4512,7 +4526,7 @@ def build_inferno_katana(part):
 #// Magma 10 Dragonfire Sword (Legendary)
 
 def build_dragonfire_sword(part):
-	blade_base = 0.58
+	blade_base = 0.42
 	length = 2.9
 	spine = [(0, blade_base), (0, blade_base + length)]
 	stations = [(0, 0.2), (0.08, 0.27), (0.6, 0.25), (0.82, 0.3), (0.9, 0.2), (1, 0)]
@@ -4532,8 +4546,8 @@ def build_dragonfire_sword(part):
 		add_plate(bm, wing, None, 0.02, matrix=wing_matrix)
 		for bone in bones:
 			add_sweep(bm, [(point.x, point.y) for point in bone], [0.02] * (len(bone) - 1) + [0.006], sides=4, matrix=wing_matrix)
-	bottom = -0.08 - 0.82
-	add_grip(bm, -0.08, 0.82, 0.064, 0.077, 7)
+	bottom = 0.1 - 0.9
+	add_grip(bm, 0.1, 0.9, 0.064, 0.077, 8)
 	part(bm, "Dragon")
 
 	bm = bmesh.new()
@@ -4547,8 +4561,8 @@ def build_dragonfire_sword(part):
 	bm = bmesh.new()
 	for side in (-1, 1):
 		add_ball(bm, head + Vector((side * 0.13, -0.2, 0.1)), 0.04, (1.3, 0.6, 0.8))
-		add_flame(bm, Vector((side * 0.24, 0.62)), (side * 0.25, 1), 0.85, 0.13, side)
-		add_flame(bm, Vector((side * 0.32, 0.5)), (side * 0.8, 1), 0.5, 0.1, -side)
+		add_flame(bm, Vector((side * 0.2, 0.42)), (side * 0.3, 1), 0.95, 0.16, side)
+		add_flame(bm, Vector((side * 0.24, 0.36)), (side * 0.9, 1), 0.6, 0.12, -side)
 	part(bm, "DragonFire")
 
 	return {
@@ -4565,7 +4579,7 @@ def build_dragonfire_sword(part):
 #// Magma 11 Molten Core Blade (Mythic)
 
 def build_molten_core_blade(part):
-	blade_base = 0.46
+	blade_base = 0.34
 	length = 3.2
 	spine = [(0, blade_base), (0, blade_base + length)]
 	stations = [(0, 0.24), (0.07, 0.32), (0.62, 0.3), (0.84, 0.22), (1, 0)]
@@ -4586,8 +4600,8 @@ def build_molten_core_blade(part):
 		add_sweep(bm, [(side * 0.14, 0.12), (side * 0.38, 0.06), (side * 0.56, 0.2), (side * 0.62, 0.42)], [0.07, 0.065, 0.05, 0.0], sides=6)
 		add_spike(bm, (side * 0.3, 0, 0.1), (side * 0.3, 0, -1), 0.3, 0.06, sides=5)
 	add_torus(bm, 0.22, 0.05, 16, 6, Matrix.Translation((0, 0, 0.2)))
-	bottom = -0.08 - 0.88
-	for height in (-0.08, -0.5, bottom + 0.02):
+	bottom = 0.0 - 0.95
+	for height in (0.0, -0.45, bottom + 0.02):
 		add_pommel(bm, [(0.06, height - 0.03), (0.095, height - 0.015), (0.095, height + 0.015), (0.06, height + 0.03)])
 	add_spike(bm, (0, 0, bottom - 0.02), (0, 0, -1), 0.3, 0.08, sides=5)
 	part(bm, "IronBlack")
@@ -4597,11 +4611,11 @@ def build_molten_core_blade(part):
 		if index == 0:
 			continue
 		rotation = Matrix.Rotation(math.radians(90 if index % 2 else 0), 4, "X")
-		add_torus(bm, 0.05, 0.016, 10, 5, Matrix.Translation((index * 0.085, -0.05, -0.05 - abs(index) * 0.03)) @ rotation)
+		add_torus(bm, 0.05, 0.016, 10, 5, Matrix.Translation((index * 0.085, -0.05, 0.02 - abs(index) * 0.03)) @ rotation)
 	part(bm, "Chain")
 
 	bm = bmesh.new()
-	add_grip(bm, -0.08, 0.88, 0.064, 0.077, 8)
+	add_grip(bm, 0.0, 0.95, 0.064, 0.077, 8)
 	part(bm, "DarkLeather")
 
 	return {
@@ -4621,7 +4635,7 @@ def build_molten_core_blade(part):
 #// Magma 12 Magma Titan Blade (Exclusive)
 
 def build_magma_titan_blade(part):
-	blade_base = 0.66
+	blade_base = 0.42
 	spine = [(0, blade_base), (0, blade_base + 2.4), (0.08, blade_base + 3.6), (0.24, blade_base + 4.1)]
 	stations = [(0, 0.32), (0.06, 0.42), (0.5, 0.44), (0.76, 0.38), (0.9, 0.26), (1, 0)]
 	features = []
@@ -4641,9 +4655,9 @@ def build_magma_titan_blade(part):
 		add_crystal(bm, (center.x + side * 0.3, 0, center.y), (side * 0.8, 0, 0.6), 0.32, 0.08)
 	add_cabochon(bm, (0, 0, 0.3), 0.15, 0.2, sides=10)
 	for side in (-1, 1):
-		add_flame(bm, Vector((side * 0.3, 0.62)), (side * 0.3, 1), 0.7, 0.13, side)
-		add_flame(bm, Vector((side * 0.42, 0.5)), (side * 0.9, 1), 0.5, 0.1, side)
-	bottom = -0.1 - 1.0
+		add_flame(bm, Vector((side * 0.26, 0.4)), (side * 0.3, 1), 0.75, 0.13, side)
+		add_flame(bm, Vector((side * 0.33, 0.36)), (side * 0.9, 1), 0.5, 0.1, side)
+	bottom = 0.16 - 1.05
 	add_crystal(bm, (0, 0, bottom - 0.04), (0, 0, -1), 0.36, 0.1)
 	part(bm, "TitanGlow", CRYSTAL_SMOOTH_ANGLE)
 
@@ -4653,12 +4667,12 @@ def build_magma_titan_blade(part):
 		horn = [(side * 0.3, 0.42), (side * 0.62, 0.52), (side * 0.82, 0.8), (side * 0.8, 1.15)]
 		add_sweep(bm, horn, [0.1, 0.085, 0.06, 0.0], sides=7)
 		add_sweep(bm, [(side * 0.32, 0.2), (side * 0.6, 0.06), (side * 0.72, -0.18)], [0.08, 0.06, 0.0], sides=6)
-	for height in (-0.1, -0.55, bottom + 0.02):
+	for height in (0.16, -0.38, bottom + 0.02):
 		add_pommel(bm, [(0.065, height - 0.035), (0.1, height - 0.015), (0.1, height + 0.015), (0.065, height + 0.035)])
 	part(bm, "IronBlack")
 
 	bm = bmesh.new()
-	add_grip(bm, -0.1, 1.0, 0.07, 0.084, 8)
+	add_grip(bm, 0.16, 1.05, 0.07, 0.084, 8)
 	part(bm, "DarkLeather")
 
 	return {
@@ -4734,7 +4748,8 @@ def build_galaxy_dragon_greatsword(part):
 		wing_matrix = Matrix.Translation((side * 0.3, 0.12, 0.42)) @ Matrix.Diagonal((side, 1, 1, 1)) @ Matrix.Rotation(math.radians(-14), 4, "Y")
 		for bone in bones:
 			add_sweep(bm, [(point.x, point.y) for point in bone], [0.034] * (len(bone) - 1) + [0.01], sides=5, smoothness=3, matrix=wing_matrix)
-		add_sweep(bm, [head + Vector((side * 0.14, 0.12, 0.16)) * scale, head + Vector((side * 0.34, 0.24, 0.42)) * scale, head + Vector((side * 0.36, 0.36, 0.72)) * scale, head + Vector((side * 0.28, 0.4, 0.9)) * scale], [0.1, 0.08, 0.05, 0.0], sides=6)
+		horn = [head + Vector((side * 0.16, -0.06, 0.14)) * scale, head + Vector((side * 0.34, -0.14, 0.34)) * scale, head + Vector((side * 0.46, -0.18, 0.62)) * scale, head + Vector((side * 0.42, -0.14, 0.86)) * scale]
+		add_sweep(bm, horn, [0.1, 0.085, 0.055, 0.0], sides=7)
 	add_ball(bm, head + Vector((0, 0.06, 0.04)) * scale, 0.27 * scale, (1.1, 1.0, 0.95))
 	add_box(bm, (0.32 * scale, 0.4 * scale, 0.2 * scale), head + Vector((0, -0.28, -0.06)) * scale, 0.1)
 	add_box(bm, (0.28 * scale, 0.34 * scale, 0.08 * scale), head + Vector((0, -0.22, -0.22)) * scale, 0.04)
@@ -4750,6 +4765,11 @@ def build_galaxy_dragon_greatsword(part):
 	part(bm, "StarCore")
 
 	bm = bmesh.new()
+	for phase in (0, math.pi):
+		ribbon = spiral_path(0.66, 0.12, 0.55, blade_base + 3.2, 1.75, 22, phase)
+		add_sweep(bm, ribbon, [0.035] * 18 + [0.03, 0.022, 0.012, 0.0], sides=6, flatten=0.5, smoothness=3)
+		for index in range(3, 20, 4):
+			add_ball(bm, ribbon[index], 0.06)
 	add_torus(bm, 0.62, 0.035, 32, 6, Matrix.Translation((0, 0, blade_base + 1.2)) @ Matrix.Rotation(math.radians(70), 4, "X") @ Matrix.Rotation(math.radians(-12), 4, "Y"))
 	part(bm, "CosmicGlow")
 
