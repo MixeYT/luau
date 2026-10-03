@@ -231,6 +231,10 @@ PALETTE = {
 	"GalaxyGlow": ("FF6AE8", "A81A9A", "FFE0FA"),
 	"StarCore": ("FFF6A0", "D8A82E", "FFFFFF"),
 	"CosmicGlow": ("6AE8FF", "1E8AC8", "E8FFFF"),
+	"AbyssMouth": ("4A0E1E", "14040A", "8A2A3A"),
+	"AncientBronze": ("4E8A7A", "1E3A34", "A8D8C8"),
+	"BronzeShaft": ("4E8A7A", "1E3A34", "A8D8C8"),
+	"Barnacle": ("D8D0C0", "6A6458", "FFFFFF"),
 	"SickleSteel": ("9AA2AE", "3A3F4A", "E6ECF4"),
 	"Crow": ("2E2E3E", "0E0E14", "6E6E8E"),
 	"Beak": ("F7A93A", "8A4A0E", "FFE0A0"),
@@ -2278,6 +2282,23 @@ def boolean_difference(target, cutter):
 	return result
 
 
+def carve_pockets(solid, cutter):
+	# Cuts the cutter out of the solid, returns the remaining shell and the new inner faces as two bmeshes.
+	carved = boolean_difference(solid, cutter)
+	tree = mathutils.bvhtree.BVHTree.FromBMesh(solid)
+	pocket_indices = set()
+	for face in carved.faces:
+		nearest = tree.find_nearest(face.calc_center_median())
+		if nearest[3] is not None and nearest[3] > 0.004:
+			pocket_indices.add(face.index)
+	solid.free()
+	cutter.free()
+	pockets = carved.copy()
+	bmesh.ops.delete(pockets, geom=[face for face in pockets.faces if face.index not in pocket_indices], context="FACES")
+	bmesh.ops.delete(carved, geom=[face for face in carved.faces if face.index in pocket_indices], context="FACES")
+	return carved, pockets
+
+
 def carving_is_clean(carved, pockets, center, radius):
 	# Looks into every cut from the front and the back, it has to see a pocket and not the shell.
 	carved.faces.ensure_lookup_table()
@@ -3540,8 +3561,16 @@ def build_angler_blade(part):
 	part(bm, "Abyss")
 
 	head = Vector((0, 0, 0.2))
-	bm = bmesh.new()
-	add_ball(bm, head + Vector((0, 0, 0.04)), 0.3, (1.25, 0.85, 0.95))
+	mouth_center = head + Vector((0, 0, -0.04))
+	skull = bmesh.new()
+	profile = [(0.3 * math.sin(math.pi * ring / 8), -0.3 * math.cos(math.pi * ring / 8)) for ring in range(9)]
+	add_lathe(skull, profile, 16, Matrix.LocRotScale(head + Vector((0, 0, 0.04)), None, Vector((1.25, 0.85, 0.95))))
+	mouth = [Vector((mouth_center.x + math.cos(angle) * 0.26, mouth_center.z + math.sin(angle) * 0.13)) for angle in numpy.linspace(0, math.tau, 17)[:-1]]
+	cutter = bmesh.new()
+	for side in (-1, 1):
+		add_plate(cutter, mouth, None, 0.15, matrix=Matrix.Translation((0, side * 0.28, 0)))
+	bm, inside = carve_pockets(skull, cutter)
+	part(inside, "AbyssMouth")
 	for side in (-1, 1):
 		fin = [Vector((side * 0.3, 0.1)), Vector((side * 0.62, 0.28)), Vector((side * 0.56, 0.08)), Vector((side * 0.62, -0.08)), Vector((side * 0.32, 0.0))]
 		add_plate(bm, fin if side > 0 else fin[::-1], None, 0.025)
@@ -3553,10 +3582,13 @@ def build_angler_blade(part):
 
 	bm = bmesh.new()
 	for side in (-1, 1):
-		for index in range(5):
-			x = side * (0.05 + index * 0.065)
-			add_spike(bm, (x, -0.22, 0.12), (side * 0.15, -0.3, 1), 0.12 - index * 0.012, 0.022, sides=4)
-			add_spike(bm, (x, -0.22, -0.02), (side * 0.15, -0.3, -1), 0.1 - index * 0.01, 0.02, sides=4)
+		for index, x in enumerate(numpy.linspace(-0.2, 0.2, 7)):
+			half_height = 0.13 * math.sqrt(max(0.0, 1 - (x / 0.26) ** 2))
+			add_spike(bm, (x, side * 0.19, mouth_center.z + half_height + 0.02), (0, side * 0.2, -1), half_height * (1.15 if index % 2 else 0.85), 0.024, sides=4)
+			if index < 6:
+				lower_x = x + 0.033
+				lower_height = 0.13 * math.sqrt(max(0.0, 1 - (lower_x / 0.26) ** 2))
+				add_spike(bm, (lower_x, side * 0.19, mouth_center.z - lower_height - 0.02), (0, side * 0.2, 1), lower_height * 0.9, 0.022, sides=4)
 	part(bm, "Tooth")
 
 	bm = bmesh.new()
@@ -3634,53 +3666,71 @@ def build_jellyfish_sword(part):
 
 #// Atlantis 07 Poseidon Trident (Epic)
 
+def barbed_prong(base, top, shaft_width, head_width, head_length, barb):
+	# Straight prong with an arrow head whose barbs hang down, returns the outline and its plateau.
+	head_base = top - head_length
+	right = [Vector((shaft_width, base)), Vector((shaft_width, head_base)), Vector((head_width, head_base - barb))]
+	outline = right + [Vector((0, top))] + [Vector((-point.x, point.y)) for point in right[::-1]]
+	inner = [Vector((shaft_width * 0.6, base + 0.04)), Vector((shaft_width * 0.6, head_base)), Vector((head_width * 0.5, head_base - barb * 0.3))]
+	plateau = inner + [Vector((0, top - 0.1))] + [Vector((-point.x, point.y)) for point in inner[::-1]]
+	return outline, plateau
+
+
+def add_barnacle(bm, center, direction, size):
+	add_lathe(bm, [(size, -size * 0.3), (size * 0.9, size * 0.3), (size * 0.55, size * 0.75), (size * 0.38, size * 0.62), (0, size * 0.35)], 8, oriented(center, direction))
+
+
 def build_poseidon_trident(part):
-	blade_base = 0.34
-	length = 2.9
-	outline, plateau = profile_shape(
-		[(0, blade_base), (0, blade_base + length)],
-		[(0, 0.16), (0.08, 0.21), (0.62, 0.18), (0.72, 0.14), (0.9, 0.1), (1, 0)],
-		chamfer=0.09,
-	)
+	hub = 1.05
 	bm = bmesh.new()
-	add_plate(bm, outline, plateau)
-	part(bm, "Sea")
-
-	bm = bmesh.new()
+	outline, plateau = barbed_prong(hub - 0.1, hub + 2.2, 0.1, 0.27, 0.5, 0.17)
+	add_plate(bm, outline, plateau, 0.045, 0.11)
 	for side in (-1, 1):
-		prong_spine = [(side * 0.12, blade_base + 1.6), (side * 0.36, blade_base + 1.95), (side * 0.38, blade_base + 2.45), (side * 0.32, blade_base + 2.75)]
-		prong, prong_plateau = profile_shape(prong_spine, [(0, 0.08), (0.2, 0.09), (0.7, 0.07), (1, 0)], chamfer=0.05)
-		add_plate(bm, prong, prong_plateau, 0.015, 0.07)
-		add_spike(bm, (side * 0.4, 0, blade_base + 2.2), (side * 1, 0, -0.6), 0.16, 0.05, sides=4)
-	trim, trim_plateau = profile_shape([(0, blade_base), (0, blade_base + length)], [(0, 0.2), (0.08, 0.25), (0.62, 0.22), (0.72, 0.18), (0.9, 0.13), (1, 0)], chamfer=0.03, plateau_ratio=0.5)
-	add_plate(bm, trim, trim_plateau, 0.008, 0.016)
-	for side in (-1, 1):
-		add_wave_curl(bm, side, (0.12, 0.08), 0.3)
-	add_box(bm, (0.34, 0.24, 0.28), (0, 0, 0.12), 0.06)
-	bottom = -0.04 - 0.78
-	add_pommel(bm, [(0.06, -0.06), (0.09, -0.04), (0.09, 0.0), (0.06, 0.02)])
-	add_pommel(bm, [(0.05, bottom + 0.02), (0.1, bottom - 0.02), (0.1, bottom - 0.06), (0.06, bottom - 0.1)])
-	add_spike(bm, (0, 0, bottom - 0.1), (0, 0, -1), 0.22, 0.06)
-	part(bm, "Gold")
+		arm, arm_plateau = profile_shape([(side * 0.04, hub - 0.08), (side * 0.3, hub + 0.0), (side * 0.52, hub + 0.2), (side * 0.56, hub + 0.48)], [(0, 0.13), (1, 0.1)], tip="flat", chamfer=0.05)
+		add_plate(bm, arm, arm_plateau, 0.045, 0.11)
+		prong, prong_plateau = barbed_prong(hub + 0.4, hub + 1.8, 0.095, 0.24, 0.45, 0.15)
+		add_plate(bm, prong, prong_plateau, 0.045, 0.11, Matrix.Translation((side * 0.56, 0, 0)) @ Matrix.Rotation(math.radians(-side * 4), 4, "Y"))
+	part(bm, "AncientBronze")
 
 	bm = bmesh.new()
-	add_cabochon(bm, (0, 0, 0.13), 0.09, 0.16)
-	part(bm, "AtlantisGlow", CRYSTAL_SMOOTH_ANGLE)
+	add_ball(bm, (0, 0, hub - 0.05), 0.2, (1.15, 0.9, 1.0))
+	for height, radius in ((hub - 0.28, 0.11), (hub - 0.42, 0.105)):
+		add_lathe(bm, [(0.08, height - 0.05), (radius, height - 0.03), (radius, height + 0.03), (0.08, height + 0.05)], 10)
+	add_lathe(bm, [(0.075, hub - 0.2), (0.08, -0.4), (0.075, -1.3)], 10)
+	add_lathe(bm, [(0.09, -1.28), (0.11, -1.33), (0.08, -1.42), (0, -1.45)], 10)
+	part(bm, "BronzeShaft")
 
 	bm = bmesh.new()
-	add_grip(bm, -0.04, 0.78, 0.062, 0.074, 7)
-	part(bm, "OceanKing")
+	generator = numpy.random.default_rng(5)
+	clusters = [((0.14, hub - 0.02), 4), ((-0.18, hub + 0.06), 3), ((0.5, hub + 0.28), 3), ((-0.54, hub + 0.48), 2), ((0.05, hub + 0.98), 2), ((-0.6, hub + 1.25), 2), ((0.0, hub - 0.48), 3)]
+	for (x, z), count in clusters:
+		for _ in range(count):
+			for y_side in (-1, 1):
+				offset = Vector((generator.uniform(-0.08, 0.08), 0, generator.uniform(-0.08, 0.08)))
+				center = Vector((x, y_side * 0.09, z)) + offset
+				add_barnacle(bm, center, (generator.uniform(-0.3, 0.3), y_side, generator.uniform(-0.2, 0.4)), generator.uniform(0.05, 0.08))
+	part(bm, "Barnacle")
 
-	waves = []
-	for index in range(5):
-		z = blade_base + 0.3 + index * 0.32
-		waves.append([(-0.08, z), (-0.04, z + 0.04), (0.0, z), (0.04, z + 0.04), (0.08, z)])
+	runes = glyph_strokes([[ATLANTIS_GLYPHS[index]] for index in (0, 3, 1)], [(0, hub + 0.5), (0, hub + 1.0), (0, hub + 1.45)], 0.065)
+	runes += glyph_strokes([[ATLANTIS_GLYPHS[2]], [ATLANTIS_GLYPHS[4]]], [(-0.56, hub + 0.95), (0.56, hub + 0.95)], 0.06)
+	cracks = [
+		[(0.03, hub + 0.1), (-0.02, hub + 0.22), (0.02, hub + 0.32)],
+		[(0.02, hub + 1.2), (-0.03, hub + 1.3), (0.01, hub + 1.38)],
+		[(-0.58, hub + 0.6), (-0.54, hub + 0.72), (-0.58, hub + 0.82)],
+		[(0.55, hub + 1.3), (0.6, hub + 1.42)],
+	]
 	return {
-		"blade": "Sea",
-		"decals": waves,
-		"decal_width": 0.018,
-		"decal_colors": ("E8FAFF", "FFFFFF"),
-		"effects": {"Sea": {"gradient": (0.3, 3.3, [(0, "0E4A9A"), (0.6, "3AA8E0"), (1, "A8F0FF")]), "patterns": [("nebula", "8AE8FF", 3, 0.35)]}},
+		"blade": "AncientBronze",
+		"outline": outline,
+		"edge_glow": ("2AD8C8", 0.025),
+		"decals": runes + cracks,
+		"decal_width": 0.022,
+		"decal_colors": ("4FFFF0", "D8FFFF"),
+		"effects": {
+			"AncientBronze": {"gradient": (0.8, 3.3, [(0, "2E5A50"), (1, "5A9A88")]), "patterns": [("nebula", "A0683A", 3.5, 0.7), ("cells", "1E3A34", 3, 0.4), ("stars", "A8E8D8", 9, 0.4)]},
+			"BronzeShaft": {"gradient": (-1.4, 1.2, [(0, "24443C"), (1, "4E8A7A")]), "patterns": [("nebula", "8A5A34", 4, 0.55), ("cells", "1E3A34", 4, 0.3)]},
+			"Barnacle": {"gradient": (-0.6, 2.6, [(0, "9A9080"), (1, "D8D0C0")]), "patterns": [("nebula", "7A7060", 6, 0.5)]},
+		},
 	}
 
 
