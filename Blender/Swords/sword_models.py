@@ -3,6 +3,7 @@ import bmesh
 import math
 import os
 import numpy
+import mathutils.bvhtree
 from mathutils import Matrix, Vector
 
 # Run inside Blender 4.1+: Scripting tab -> Open -> Run Script.
@@ -41,6 +42,7 @@ DECAL_RESOLUTION = 300  # pixels per unit
 OUTLINE_SMOOTHNESS = 3
 OUTLINE_TOLERANCE = 0.006  # points closer than this to a straight line are removed
 PROFILE_SAMPLES_PER_UNIT = 5
+PLATEAU_SPACING = 0.12  # longest plateau edge before the chamfer gets split
 BLADE_EDGE_THICKNESS = 0.02
 BLADE_CENTER_THICKNESS = 0.1
 GRIP_THICKNESS = 1.4  # scales every grip, pommel and grip collar
@@ -170,6 +172,7 @@ PALETTE = {
 	"HellFire": ("FF8A2E", "C0380E", "FFE8A0"),
 	"NightmareBlade": ("2A1A40", "0A0614", "8A6AD0"),
 	"SoulGlow": ("7CFF9A", "1E9A4A", "E0FFE8"),
+	"SoulCarve": ("7CFF9A", "1E9A4A", "E0FFE8"),
 	"SickleSteel": ("9AA2AE", "3A3F4A", "E6ECF4"),
 	"Crow": ("2E2E3E", "0E0E14", "6E6E8E"),
 	"Beak": ("F7A93A", "8A4A0E", "FFE0A0"),
@@ -186,8 +189,11 @@ PALETTE = {
 GLOW_MATERIALS = {
 	"FireGem", "Flame", "DemonGlow", "DemonEye", "StarGlow", "HaloGlow", "VoidGlow", "VoidCyan",
 	"Venom", "CurseGlow", "SandGlow", "SunGlow", "DjinnGlow", "DjinnSmoke",
-	"PumpkinGlow", "BatEye", "PotionGlow", "ReaperGlow", "GhostGlow", "BloodGlow", "HellFire", "SoulGlow", "SpiderEye",
+	"PumpkinGlow", "BatEye", "PotionGlow", "ReaperGlow", "GhostGlow", "BloodGlow", "HellFire", "SoulGlow", "SpiderEye", "SoulCarve",
 }
+
+# Glow parts carved into a model get no outline, it would poke into the carving.
+CARVED_MATERIALS = {"PumpkinGlow", "SoulCarve"}
 
 
 #// Math Helpers
@@ -405,25 +411,72 @@ def new_part(name, bm, material, smooth_angle):
 
 
 def bridge_loops(bm, outer, inner):
-	start = min(range(len(inner)), key=lambda j: (inner[j].co - outer[0].co).xz.length)
+	# Zips the outline to the plateau. Every outline point is matched to where its closest point sits
+	# along the plateau, so tight curls, notches and teeth can't make the chamfer fold over itself.
+	inner_points = [vert.co.xz for vert in inner]
+	lengths = [0]
+	for i, point in enumerate(inner_points):
+		lengths.append(lengths[-1] + (inner_points[(i + 1) % len(inner)] - point).length)
+	total = lengths[-1]
+
+	def project(point):
+		best_distance, best_position = math.inf, 0
+		for i, start in enumerate(inner_points):
+			edge = inner_points[(i + 1) % len(inner)] - start
+			t = max(0, min(1, (point - start).dot(edge) / max(edge.length_squared, 1e-12)))
+			distance = (start + edge * t - point).length
+			if distance < best_distance:
+				best_distance, best_position = distance, lengths[i] + t * edge.length
+		return best_position
+
+	origin = project(outer[0].co.xz)
+	outer_positions = []
+	for vert in outer:
+		position = (project(vert.co.xz) - origin) % total
+		if outer_positions and (position < outer_positions[-1] or position - outer_positions[-1] > total / 2):
+			position = outer_positions[-1]
+		outer_positions.append(position)
+
+	inner_positions = [(length - origin) % total for length in lengths[:-1]]
+	start = min(range(len(inner)), key=lambda j: inner_positions[j])
 	inner = inner[start:] + inner[:start]
+	inner_positions = inner_positions[start:] + inner_positions[:start]
+
+	def winding(a, b, c):
+		a, b, c = a.co.xz, b.co.xz, c.co.xz
+		return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x)
+
+	points = [vert.co.xz for vert in outer]
+	orientation = 1 if sum(a.x * b.y - b.x * a.y for a, b in zip(points, points[1:] + points[:1])) > 0 else -1
+
 	i = j = 0
 	while i < len(outer) or j < len(inner):
-		current_outer = outer[i % len(outer)]
-		current_inner = inner[j % len(inner)]
-		next_outer = outer[(i + 1) % len(outer)]
-		next_inner = inner[(j + 1) % len(inner)]
-
-		advance_outer = j >= len(inner) or (
-			i < len(outer)
-			and (next_outer.co - current_inner.co).xz.length < (next_inner.co - current_outer.co).xz.length
-		)
+		next_outer = outer_positions[i + 1] if i + 1 < len(outer) else total
+		next_inner = inner_positions[j + 1] if j + 1 < len(inner) else total
+		advance_outer = j >= len(inner) or (i < len(outer) and next_outer <= next_inner)
+		if i < len(outer) and j < len(inner) and abs(next_outer - next_inner) < 0.2:
+			outer_flipped = winding(outer[i], outer[(i + 1) % len(outer)], inner[j]) * orientation < -1e-7
+			inner_flipped = winding(outer[i], inner[(j + 1) % len(inner)], inner[j]) * orientation < -1e-7
+			if advance_outer and outer_flipped and not inner_flipped:
+				advance_outer = False
+			elif not advance_outer and inner_flipped and not outer_flipped:
+				advance_outer = True
 		if advance_outer:
-			bm.faces.new((current_outer, next_outer, current_inner))
+			bm.faces.new((outer[i], outer[(i + 1) % len(outer)], inner[j % len(inner)]))
 			i += 1
 		else:
-			bm.faces.new((current_outer, next_inner, current_inner))
+			bm.faces.new((outer[i % len(outer)], inner[(j + 1) % len(inner)], inner[j]))
 			j += 1
+
+
+def densify(points, spacing=PLATEAU_SPACING):
+	# Extra points along long straight plateau edges give the chamfer zipper close partners everywhere.
+	result = []
+	for i, point in enumerate(points):
+		following = points[(i + 1) % len(points)]
+		steps = max(1, math.ceil((following - point).length / spacing))
+		result += [point.lerp(following, step / steps) for step in range(steps)]
+	return result
 
 
 def add_plate(bm, outline, plateau=None, edge_thickness=BLADE_EDGE_THICKNESS, center_thickness=BLADE_CENTER_THICKNESS, matrix=Matrix()):
@@ -435,7 +488,7 @@ def add_plate(bm, outline, plateau=None, edge_thickness=BLADE_EDGE_THICKNESS, ce
 		new_verts += outer
 		sides[side] = outer
 		if plateau:
-			inner = [bm.verts.new((point.x, side * center_thickness, point.y)) for point in plateau]
+			inner = [bm.verts.new((point.x, side * center_thickness, point.y)) for point in densify(plateau)]
 			new_verts += inner
 			bridge_loops(bm, outer, inner)
 			bm.faces.new(inner)
@@ -2121,20 +2174,103 @@ def add_pumpkin(bm, center, radius, height=0.78, ribs=8, sides=16, rings=8):
 		vert.co += Vector(center)
 
 
-def add_pumpkin_face(bm, center, radius, size=1.0, depth_offset=0.0):
-	# Carved triangle eyes, nose and a jagged grin on both sides of a pumpkin.
-	cx, cz = center[0], center[2]
-	eye = [Vector((-0.11, -0.06)), Vector((0.11, -0.06)), Vector((0.0, 0.1))]
-	nose = [Vector((-0.05, -0.04)), Vector((0.05, -0.04)), Vector((0.0, 0.05))]
-	mouth = [
-		Vector((-0.28, 0.04)), Vector((-0.18, -0.02)), Vector((-0.12, 0.04)), Vector((-0.04, -0.03)), Vector((0.04, 0.04)),
-		Vector((0.12, -0.03)), Vector((0.18, 0.04)), Vector((0.28, 0.04)), Vector((0.18, -0.12)), Vector((0.0, -0.17)), Vector((-0.18, -0.12)),
-	]
-	for side in (-1, 1):
-		y = side * (radius * 0.9 + depth_offset)
-		for shape, offset in ((eye, (-0.16, 0.12)), (eye, (0.16, 0.12)), (nose, (0, -0.02)), (mouth, (0, -0.12))):
-			points = [Vector((cx + (point.x + offset[0]) * size * radius / 0.36, cz + (point.y + offset[1]) * size * radius / 0.36)) for point in shape]
-			add_plate(bm, points, None, 0.02, matrix=Matrix.Translation((0, y, 0)))
+# Jack-o'-lantern face in units of the pumpkin radius: slanted angry eyes, a small nose and a fanged grin.
+PUMPKIN_EYE = [(-0.62, 0.36), (-0.12, 0.14), (-0.44, -0.02)]
+PUMPKIN_NOSE = [(-0.09, -0.06), (0.09, -0.06), (0.0, 0.1)]
+PUMPKIN_MOUTH = [
+	(-0.66, -0.1), (-0.48, -0.24), (-0.38, -0.16), (-0.27, -0.3), (-0.15, -0.2), (-0.05, -0.33), (0.05, -0.33), (0.15, -0.2),
+	(0.27, -0.3), (0.38, -0.16), (0.48, -0.24), (0.66, -0.1), (0.5, -0.42), (0.36, -0.52), (0.27, -0.4), (0.12, -0.56),
+	(0.0, -0.44), (-0.12, -0.56), (-0.27, -0.4), (-0.36, -0.52), (-0.5, -0.42),
+]
+PUMPKIN_PROBES = [(-0.38, 0.16), (0.38, 0.16), (0.0, 0.0), (0.0, -0.38), (-0.4, -0.3), (0.4, -0.3)]  # points inside the cuts
+PUMPKIN_CARVE_DEPTH = 0.22  # how deep the face is cut into the pumpkin, in units of its radius
+
+
+def merge_into(target, source):
+	mesh = bpy.data.meshes.new("Merge")
+	source.to_mesh(mesh)
+	source.free()
+	target.from_mesh(mesh)
+	bpy.data.meshes.remove(mesh)
+
+
+def boolean_difference(target, cutter):
+	# Exact boolean on two bmeshes through temporary objects, returns a new bmesh.
+	objects = []
+	for name, bm in (("BooleanTarget", target), ("BooleanCutter", cutter)):
+		bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+		mesh = bpy.data.meshes.new(name)
+		bm.to_mesh(mesh)
+		objects.append(bpy.data.objects.new(name, mesh))
+		bpy.context.scene.collection.objects.link(objects[-1])
+	modifier = objects[0].modifiers.new("Carve", "BOOLEAN")
+	modifier.operation = "DIFFERENCE"
+	modifier.solver = "EXACT"
+	modifier.object = objects[1]
+	result_mesh = bpy.data.meshes.new_from_object(objects[0].evaluated_get(bpy.context.evaluated_depsgraph_get()))
+	result = bmesh.new()
+	result.from_mesh(result_mesh)
+	bpy.data.meshes.remove(result_mesh)
+	for target_object in objects:
+		mesh = target_object.data
+		bpy.data.objects.remove(target_object)
+		bpy.data.meshes.remove(mesh)
+	return result
+
+
+def carving_is_clean(carved, pockets, center, radius):
+	# Looks into every cut from the front and the back, it has to see a pocket and not the shell.
+	carved.faces.ensure_lookup_table()
+	tree = mathutils.bvhtree.BVHTree.FromBMesh(carved)
+	for x, z in PUMPKIN_PROBES:
+		for side in (-1, 1):
+			hit = tree.ray_cast(Vector((center.x + x * radius, side * radius * 2, center.z + z * radius)), Vector((0, -side, 0)))
+			if hit[2] is None or carved.faces[hit[2]] not in pockets:
+				return False
+	return True
+
+
+def add_carved_pumpkin(shell_bm, glow_bm, center, radius, **pumpkin_options):
+	# Cuts the face into the pumpkin on the front and back. The pockets go into glow_bm,
+	# so their walls and floor become the glowing (Neon) part.
+	center = Vector(center)
+	pumpkin = bmesh.new()
+	add_pumpkin(pumpkin, center, radius, **pumpkin_options)
+
+	# The exact boolean can fail on unlucky alignments, a tiny nudge of the cutters fixes it.
+	for attempt in range(12):
+		nudge = attempt * 0.0017 * radius
+		inner = bmesh.new()
+		add_pumpkin(inner, center, radius * (1 - PUMPKIN_CARVE_DEPTH - nudge), **pumpkin_options)
+		prisms = bmesh.new()
+		shapes = [PUMPKIN_EYE, [(-x, z) for x, z in PUMPKIN_EYE], PUMPKIN_NOSE, PUMPKIN_MOUTH]
+		for side in (-1, 1):
+			for shape in shapes:
+				points = [Vector((center.x + x * radius + nudge, center.z + z * radius + nudge * 0.7)) for x, z in shape]
+				add_plate(prisms, points, None, radius * 0.5, matrix=Matrix.Translation((0, side * radius, 0)))
+		cutter = boolean_difference(prisms, inner)
+		prisms.free()
+		inner.free()
+		carved = boolean_difference(pumpkin, cutter)
+		cutter.free()
+
+		tree = mathutils.bvhtree.BVHTree.FromBMesh(pumpkin)
+		pockets = []
+		for face in carved.faces:
+			nearest = tree.find_nearest(face.calc_center_median())
+			if nearest[3] is not None and nearest[3] > radius * 0.02:
+				pockets.append(face)
+		if carving_is_clean(carved, set(pockets), center, radius) or attempt == 11:
+			break
+		carved.free()
+	pumpkin.free()
+
+	pocket_bm = carved.copy()
+	pocket_indices = {face.index for face in pockets}
+	bmesh.ops.delete(pocket_bm, geom=[face for face in pocket_bm.faces if face.index not in pocket_indices], context="FACES")
+	bmesh.ops.delete(carved, geom=pockets, context="FACES")
+	merge_into(shell_bm, carved)
+	merge_into(glow_bm, pocket_bm)
 
 
 def bat_wing_outline(scale=1.0):
@@ -2464,14 +2600,12 @@ def build_pumpkin_sword(part):
 	bm = bmesh.new()
 	add_plate(bm, outline, plateau)
 	pumpkin_center = (0, 0, 0.14)
-	add_pumpkin(bm, pumpkin_center, 0.27)
+	glow = bmesh.new()
+	add_carved_pumpkin(bm, glow, pumpkin_center, 0.27)
 	bottom = -0.1 - 0.72
 	add_pumpkin(bm, (0, 0, bottom - 0.1), 0.12, ribs=6, sides=12, rings=6)
 	part(bm, "Pumpkin")
-
-	bm = bmesh.new()
-	add_pumpkin_face(bm, pumpkin_center, 0.27)
-	part(bm, "PumpkinGlow")
+	part(glow, "PumpkinGlow", CRYSTAL_SMOOTH_ANGLE)
 
 	path = []
 	for step in range(16):
@@ -2937,7 +3071,9 @@ def build_headless_horseman_blade(part):
 	rim, rim_plateau = profile_shape(spine, [station[:1] + tuple(width + 0.035 for width in station[1:]) for station in stations], chamfer=0.03, plateau_ratio=0.5)
 	bm = bmesh.new()
 	add_plate(bm, rim, rim_plateau, 0.006, 0.016)
-	add_pumpkin_face(bm, pumpkin_center, 0.32)
+	shell = bmesh.new()
+	carving = bmesh.new()
+	add_carved_pumpkin(shell, carving, pumpkin_center, 0.32)
 	for side in (-1, 1):
 		add_flame(bm, Vector((side * 0.18, 0.46)), (side * 0.35, 1), 0.6, 0.11, side)
 		add_flame(bm, Vector((side * 0.28, 0.36)), (side * 0.8, 1), 0.42, 0.08, side)
@@ -2945,10 +3081,8 @@ def build_headless_horseman_blade(part):
 	bottom = -0.06 - 0.82
 	add_flame(bm, Vector((0, bottom - 0.33)), (0, 1), 0.2, 0.06)
 	part(bm, "HellFire")
-
-	bm = bmesh.new()
-	add_pumpkin(bm, pumpkin_center, 0.32)
-	part(bm, "Pumpkin")
+	part(shell, "Pumpkin")
+	part(carving, "PumpkinGlow", CRYSTAL_SMOOTH_ANGLE)
 
 	bm = bmesh.new()
 	knuckle_bow = [(0.24, 0.12), (0.42, -0.12), (0.42, -0.52), (0.26, -0.84), (0.06, -0.95)]
@@ -3016,19 +3150,18 @@ def build_nightmare_king_blade(part):
 	rim, rim_plateau = profile_shape(spine, [(t, width + 0.08) for t, width in stations], chamfer=0.04, plateau_ratio=0.5)
 	bm = bmesh.new()
 	add_plate(bm, rim, rim_plateau, 0.006, 0.016)
-	add_pumpkin_face(bm, pumpkin_center, 0.38)
+	shell = bmesh.new()
+	carving = bmesh.new()
+	add_carved_pumpkin(shell, carving, pumpkin_center, 0.38)
 	for side in (-1, 1):
 		add_flame(bm, Vector((side * 0.28, 0.6)), (side * 0.3, 1), 0.62, 0.12, side)
 		add_flame(bm, Vector((side * 0.38, 0.46)), (side * 0.9, 1), 0.46, 0.09, side)
 	bottom = -0.06 - 0.95
 	pommel_center = Vector((0, 0, bottom - 0.12))
-	add_pumpkin_face(bm, pommel_center, 0.15)
+	add_carved_pumpkin(shell, carving, pommel_center, 0.15, ribs=6, sides=12, rings=6)
 	part(bm, "SoulGlow")
-
-	bm = bmesh.new()
-	add_pumpkin(bm, pumpkin_center, 0.38, ribs=8, sides=16)
-	add_pumpkin(bm, pommel_center, 0.15, ribs=6, sides=12, rings=6)
-	part(bm, "Pumpkin")
+	part(shell, "Pumpkin")
+	part(carving, "SoulCarve", CRYSTAL_SMOOTH_ANGLE)
 
 	bm = bmesh.new()
 	crown_base = pumpkin_center.z + 0.27
@@ -3313,7 +3446,8 @@ def setup_bake_material(material, key, bake_image, bounds, decal=None, effects=N
 		factor = pattern(kind, scale, (-600, -1200 - index * 300))
 		color = mix(math_node("MULTIPLY", factor, strength, (0, -1200 - index * 300)), color, to_color(hex_color), (300, -250 - index * 50))
 
-	color = mix(cavity, color, shadow, (400, 0))
+	if key not in GLOW_MATERIALS:
+		color = mix(cavity, color, shadow, (400, 0))
 	color = mix(convex, color, highlight, (500, 100))
 
 	if channels and decal["strokes"]:
@@ -3521,7 +3655,7 @@ def build_sword(name, rarity, build, collection, outline_material):
 		collection.objects.link(target)
 		if target != sword:
 			target.parent = sword
-	create_outline(sword, [sword] + glow_parts, outline_material)
+	create_outline(sword, [sword] + [glow for glow in glow_parts if glow.name[len(name):] not in CARVED_MATERIALS], outline_material)
 
 	return sword, texture
 
