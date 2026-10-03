@@ -13,7 +13,7 @@ from mathutils import Matrix, Vector
 # Glowing parts are split into their own mesh named <Sword><Material>, meant to become Neon in Roblox.
 # The black inverted hull outline is a separate object named <Sword>Outline, parented to the sword.
 
-WORLD = "Starter"  # which pack to build, see WORLDS: "Starter", "Desert" or "Halloween"
+WORLD = "Starter"  # which pack to build, see WORLDS: "Starter", "Desert", "Halloween", "Atlantis", "Magma" or "Robux"
 
 TEXTURE_SIZE = 1024
 BAKE_SAMPLES = 64
@@ -173,6 +173,64 @@ PALETTE = {
 	"NightmareBlade": ("2A1A40", "0A0614", "8A6AD0"),
 	"SoulGlow": ("7CFF9A", "1E9A4A", "E0FFE8"),
 	"SoulCarve": ("7CFF9A", "1E9A4A", "E0FFE8"),
+	"SeaStone": ("6A8A9A", "2A3A4A", "B0C8D8"),
+	"Kelp": ("4E9A4A", "1E4A2A", "9AD88A"),
+	"KelpDark": ("2E6A3A", "0E2A1A", "6AA86A"),
+	"Driftwood": ("9A7A5A", "4A3A2A", "D0B898"),
+	"Shell": ("FFE3D6", "B88A7A", "FFFFFF"),
+	"Coral": ("FF6F7F", "8A1E3A", "FFC2C8"),
+	"CoralDeep": ("E04A6A", "6A1030", "FF9AAA"),
+	"Pearl": ("F4F0FF", "9A94B8", "FFFFFF"),
+	"ShellPink": ("FFB3C2", "A85A6A", "FFE0E8"),
+	"Sea": ("3AA8E0", "0E4A8A", "A8E8FF"),
+	"SharkTooth": ("F4F0E6", "9A9480", "FFFFFF"),
+	"SharkSkin": ("6A8AA8", "2A3A5A", "B0C8E0"),
+	"Abyss": ("1E2A4A", "080C1A", "5A6A9A"),
+	"AbyssBody": ("26304E", "0A0E1E", "5A6A9A"),
+	"LureGlow": ("9CFFE8", "2AB8A0", "F0FFFA"),
+	"Jelly": ("C89AFF", "6A3AB0", "F0E0FF"),
+	"JellyBell": ("B07AE8", "5A2A9A", "F0D8FF"),
+	"JellyGlow": ("FF8AE0", "B03A9A", "FFE0F6"),
+	"AtlantisGlow": ("6AFFF0", "0EA8B8", "E8FFFF"),
+	"OceanKing": ("2E7AE0", "0E2A6A", "A8D8FF"),
+	"AbyssPurple": ("4A1E6A", "1A0828", "A87AD8"),
+	"Octopus": ("B04AA8", "4A0E4A", "F08AE0"),
+	"Sucker": ("FFC2E8", "B0709A", "FFF0FA"),
+	"Atlantean": ("4FE0D0", "0E6A7A", "D0FFFA"),
+	"Marble": ("F2F0EA", "A8A498", "FFFFFF"),
+	"Leviathan": ("2E8AA0", "0E3A4A", "8AE0E8"),
+	"Fin": ("4FC8D8", "1E6A7A", "B8F4FA"),
+	"Kraken": ("3A1A5A", "12061E", "8A5AC0"),
+	"KrakenSkin": ("6A2A8A", "240A36", "C08AE8"),
+	"KrakenEye": ("FFD23A", "B8700E", "FFF6C0"),
+	"PearlGlow": ("F4FAFF", "8AB8E0", "FFFFFF"),
+	"Basalt": ("5A5A64", "22222A", "9A9AA8"),
+	"BasaltDark": ("3A3A44", "121218", "7A7A88"),
+	"Ember": ("4A3A3A", "1A1212", "8A6A6A"),
+	"EmberGlow": ("FF8A2E", "C0380E", "FFE0A0"),
+	"Obsidian": ("2A2238", "0A0612", "7A6AA0"),
+	"VolcanoRock": ("4A3A34", "1A1210", "8A7268"),
+	"Salamander": ("FF5A2E", "8A1A0E", "FFB08A"),
+	"SalamanderSpot": ("FFD23A", "B8700E", "FFF0A0"),
+	"VolcanoDark": ("3A2A24", "140C0A", "7A5A4A"),
+	"LavaGlow": ("FF6A1E", "A8200E", "FFD27A"),
+	"GolemRock": ("6A5248", "2A1E1A", "A88A7A"),
+	"PhoenixFeather": ("FF7A2E", "B8300E", "FFE07A"),
+	"PhoenixWing": ("FF9A3A", "C0400E", "FFE8A0"),
+	"PhoenixGlow": ("FFC23A", "D8600E", "FFF6C0"),
+	"InfernoSteel": ("3A3440", "121016", "8A8098"),
+	"KatanaWrap": ("B01E2E", "4A0812", "F07A7A"),
+	"DragonSteel": ("3A2228", "120A0C", "8A5A60"),
+	"Dragon": ("B0201E", "4A0808", "FF7A6A"),
+	"DragonFire": ("FFA02E", "C8400E", "FFF0A0"),
+	"MoltenCore": ("2A2228", "0A0608", "6A5A68"),
+	"CoreGlow": ("FFB02E", "C8500E", "FFF0B0"),
+	"MagmaTitan": ("1E1A22", "08060A", "5A5068"),
+	"TitanGlow": ("FF5A1E", "A8180E", "FFD08A"),
+	"Galaxy": ("3A1E8A", "120838", "A88AFF"),
+	"GalaxyGlow": ("FF6AE8", "A81A9A", "FFE0FA"),
+	"StarCore": ("FFF6A0", "D8A82E", "FFFFFF"),
+	"CosmicGlow": ("6AE8FF", "1E8AC8", "E8FFFF"),
 	"SickleSteel": ("9AA2AE", "3A3F4A", "E6ECF4"),
 	"Crow": ("2E2E3E", "0E0E14", "6E6E8E"),
 	"Beak": ("F7A93A", "8A4A0E", "FFE0A0"),
@@ -190,6 +248,8 @@ GLOW_MATERIALS = {
 	"FireGem", "Flame", "DemonGlow", "DemonEye", "StarGlow", "HaloGlow", "VoidGlow", "VoidCyan",
 	"Venom", "CurseGlow", "SandGlow", "SunGlow", "DjinnGlow", "DjinnSmoke",
 	"PumpkinGlow", "BatEye", "PotionGlow", "ReaperGlow", "GhostGlow", "BloodGlow", "HellFire", "SoulGlow", "SpiderEye", "SoulCarve",
+	"LureGlow", "JellyGlow", "AtlantisGlow", "KrakenEye", "PearlGlow", "EmberGlow", "LavaGlow", "PhoenixGlow",
+	"DragonFire", "CoreGlow", "TitanGlow", "GalaxyGlow", "StarCore", "CosmicGlow",
 }
 
 # Glow parts carved into a model get no outline, it would poke into the carving.
@@ -3230,10 +3290,1461 @@ HALLOWEEN_SWORDS = [
 ]
 
 
+#// Atlantis World
+
+def spiral_path(radius_x, radius_y, start, end, turns, steps, phase=0.0):
+	# Helix around the blade, used for kelp, tentacles and serpent bodies.
+	path = []
+	for step in range(steps):
+		t = step / (steps - 1)
+		angle = phase + t * math.tau * turns
+		path.append((math.cos(angle) * radius_x, math.sin(angle) * radius_y, start + (end - start) * t))
+	return path
+
+
+def add_tentacle(bm, sucker_bm, points, base_radius, suckers=True):
+	# Tapered tube with a row of suckers along its inner side.
+	count = len(points)
+	radii = [base_radius * (1 - index / (count - 1)) ** 0.8 for index in range(count - 1)] + [0.0]
+	add_sweep(bm, points, radii, sides=6, smoothness=3)
+	if suckers and sucker_bm is not None:
+		path = catmull_rom([Vector(point) if len(point) == 3 else Vector((point[0], 0, point[1])) for point in points], 3)
+		for index in range(1, len(path) - 3, 2):
+			t = index / len(path)
+			offset = Vector((0, -1, 0)) * base_radius * GUARD_THICKNESS * (1 - t) * 0.85
+			add_ball(sucker_bm, path[index] + offset, base_radius * 0.55 * (1 - t) + 0.008, (1, 0.5, 1))
+
+
+def add_wave_curl(bm, side, root, size, height=0.0):
+	# Golden wave crest that rolls over itself, used as crossguards.
+	curl = []
+	for step in range(9):
+		t = step / 8
+		angle = math.pi * 0.9 * t * 2.2
+		radius = size * (1 - t * 0.7)
+		curl.append((root[0] + side * (size * 1.4 * t + math.sin(angle) * radius * 0.6), root[1] + height + (1 - math.cos(angle)) * radius * 0.6))
+	add_sweep(bm, curl, [size * 0.22 * (1 - index / 10) for index in range(8)] + [0.0], sides=6, smoothness=3)
+
+
+#// Atlantis 01 Kelp Blade (Common)
+
+def build_kelp_blade(part):
+	blade_base = 0.16
+	length = 2.3
+	spine = [(0, blade_base), (0.05, blade_base + 0.8), (-0.04, blade_base + 1.6), (0.03, blade_base + length)]
+	outline, plateau = profile_shape(
+		spine,
+		[(0, 0.2), (0.08, 0.25), (0.75, 0.22), (0.92, 0.14), (1, 0)],
+		chamfer=0.09,
+		features=[(0.4, 1, 0.1, 0.05, 0.3), (0.62, -1, 0.12, 0.05, -0.3)],
+	)
+	bm = bmesh.new()
+	add_plate(bm, outline, plateau)
+	part(bm, "SeaStone")
+
+	bm = bmesh.new()
+	for phase in (0, math.pi):
+		path = spiral_path(0.27, 0.12, blade_base + 0.05, blade_base + 1.75, 1.3, 14, phase)
+		add_sweep(bm, path, [0.03] * 11 + [0.024, 0.016, 0.0], sides=5, smoothness=3)
+		for index in (3, 6, 9, 12):
+			x, y, z = path[index]
+			side = 1 if x > 0 else -1
+			leaf, leaf_plateau = profile_shape([(0, 0), (0.1 * side, 0.12), (0.14 * side, 0.3)], [(0, 0.03), (0.4, 0.07), (1, 0)], chamfer=0.025)
+			add_plate(bm, leaf, leaf_plateau, 0.006, 0.018, Matrix.Translation((x, y, z)))
+	part(bm, "Kelp")
+
+	bm = bmesh.new()
+	add_sweep(bm, [(-0.42, 0.02), (-0.2, 0.1), (0, 0.11), (0.2, 0.1), (0.42, 0.02)], [0.05, 0.065, 0.075, 0.065, 0.05], sides=7)
+	for side in (-1, 1):
+		add_ball(bm, (side * 0.45, 0, 0.0), 0.08, (1, 0.9, 1))
+	add_pommel(bm, [(0.06, -0.06), (0.085, -0.03), (0.085, 0.02), (0.06, 0.05)])
+	part(bm, "Driftwood")
+
+	bottom = -0.06 - 0.74
+	bm = bmesh.new()
+	add_grip(bm, -0.06, 0.74, 0.062, 0.074, 7)
+	part(bm, "KelpDark")
+
+	bm = bmesh.new()
+	add_ball(bm, (0, 0, bottom - 0.12), 0.14, (1, 0.9, 1.05))
+	for x, z in ((-0.1, blade_base + 0.35), (0.12, blade_base + 0.7), (-0.08, blade_base + 1.25)):
+		add_lathe(bm, [(0.05, -0.07), (0.035, 0.0), (0.045, 0.07)], 6, oriented((x, 0, z), (0, 1, 0)))
+	part(bm, "Shell")
+
+	return {
+		"blade": "SeaStone",
+		"effects": {
+			"SeaStone": {"gradient": (0.1, 2.5, [(0, "4E6A7A"), (1, "A8C8D4")]), "patterns": [("cells", "3E5A6A", 3, 0.35), ("nebula", "6AB89A", 2.5, 0.3)]},
+			"KelpDark": {"patterns": [("bands", "4E8A4A", 10, 0.5)]},
+		},
+	}
+
+
+#// Atlantis 02 Coral Sword (Common)
+
+def build_coral_sword(part):
+	blade_base = 0.18
+	length = 2.4
+	outline, plateau = profile_shape(
+		[(0, blade_base), (0, blade_base + length)],
+		[(0, 0.18), (0.08, 0.23), (0.7, 0.2), (0.9, 0.13), (1, 0)],
+		chamfer=0.09,
+	)
+	bm = bmesh.new()
+	add_plate(bm, outline, plateau)
+	part(bm, "Coral")
+
+	bm = bmesh.new()
+	for side, z, length_scale in ((1, 0.55, 1.0), (-1, 0.95, 0.9), (1, 1.45, 0.8), (-1, 1.9, 0.65)):
+		root = Vector((side * 0.19, blade_base + z))
+		branch = [root, root + Vector((side * 0.16, 0.1)) * length_scale, root + Vector((side * 0.22, 0.28)) * length_scale]
+		add_sweep(bm, branch, [0.04, 0.035, 0.03], sides=6)
+		add_ball(bm, (branch[-1].x, 0, branch[-1].y), 0.045)
+		twig = [branch[1], branch[1] + Vector((side * 0.14, 0.02)) * length_scale]
+		add_sweep(bm, twig, [0.03, 0.026], sides=6)
+		add_ball(bm, (twig[-1].x, 0, twig[-1].y), 0.038)
+	for side in (-1, 1):
+		for angle, reach in ((15, 0.42), (50, 0.34), (-20, 0.3)):
+			direction = Vector((side * math.cos(math.radians(angle)), math.sin(math.radians(angle))))
+			end = Vector((side * 0.08, 0.1)) + direction * reach
+			add_sweep(bm, [(side * 0.06, 0.1), ((side * 0.08 + end.x) / 2, 0.14 + (end.y - 0.1) / 2), (end.x, end.y)], [0.06, 0.05, 0.04], sides=6)
+			add_ball(bm, (end.x, 0, end.y), 0.06)
+	part(bm, "CoralDeep")
+
+	bottom = -0.04 - 0.74
+	bm = bmesh.new()
+	add_grip(bm, -0.04, 0.74, 0.062, 0.074, 7)
+	part(bm, "Driftwood")
+
+	bm = bmesh.new()
+	star = star_shape(5, 0.17, 0.07)
+	add_plate(bm, star, [point * 0.45 for point in star], 0.03, 0.07, Matrix.Translation((0, 0, bottom - 0.14)))
+	part(bm, "Shell")
+
+	return {
+		"blade": "Coral",
+		"effects": {
+			"Coral": {"gradient": (0.2, 2.6, [(0, "E0506A"), (1, "FFB0B8")]), "patterns": [("stars", "FFE0E6", 7, 0.8), ("cells", "C83A5A", 3, 0.3)]},
+			"CoralDeep": {"patterns": [("stars", "FFC2CC", 10, 0.7)]},
+			"Shell": {"patterns": [("stars", "FF8A5A", 12, 0.7)]},
+		},
+	}
+
+
+#// Atlantis 03 Shell Sword (Uncommon)
+
+def build_shell_sword(part):
+	blade_base = 0.32
+	length = 2.5
+	outline, plateau = profile_shape(
+		[(0, blade_base), (0, blade_base + length)],
+		[(0, 0.17), (0.1, 0.24), (0.55, 0.26), (0.85, 0.17), (1, 0)],
+		chamfer=0.1,
+	)
+	bm = bmesh.new()
+	add_plate(bm, outline, plateau)
+	part(bm, "Pearl")
+
+	fan = []
+	for step in range(15):
+		angle = math.pi * step / 14
+		radius = 0.46 + (0.035 if step % 2 else 0)
+		fan.append(Vector((math.cos(angle) * radius, 0.06 + math.sin(angle) * radius * 0.82)))
+	fan += [Vector((-0.08, -0.02)), Vector((0.08, -0.02))]
+	bm = bmesh.new()
+	add_plate(bm, fan, [Vector((point.x * 0.6, 0.06 + (point.y - 0.06) * 0.6)) for point in fan], 0.03, 0.09)
+	part(bm, "ShellPink")
+
+	bm = bmesh.new()
+	for step in range(1, 14, 2):
+		angle = math.pi * step / 14
+		tip = Vector((math.cos(angle) * 0.47, 0.06 + math.sin(angle) * 0.47 * 0.82))
+		for y in (-0.085, 0.085):
+			add_sweep(bm, [(0, y, 0.0), (tip.x * 0.55, y, tip.y * 0.55), (tip.x * 0.98, y, tip.y * 0.98)], [0.02, 0.022, 0.016], sides=5)
+	add_box(bm, (0.22, 0.2, 0.12), (0, 0, -0.02), 0.04)
+	add_pommel(bm, [(0.055, -0.08), (0.08, -0.06), (0.08, -0.03), (0.055, -0.02)])
+	part(bm, "Shell")
+
+	bottom = -0.08 - 0.74
+	bm = bmesh.new()
+	add_grip(bm, -0.08, 0.74, 0.062, 0.074, 7)
+	part(bm, "Sea")
+
+	bm = bmesh.new()
+	add_ball(bm, (0, 0, bottom - 0.13), 0.14)
+	add_ball(bm, (0, -0.1, 0.12), 0.07)
+	add_ball(bm, (0, 0.1, 0.12), 0.07)
+	part(bm, "Pearl")
+
+	return {
+		"blade": "Pearl",
+		"outline": outline,
+		"edge_glow": ("FFD6EA", 0.06),
+		"effects": {
+			"Pearl": {"gradient": (0.3, 2.8, [(0, "F0A0C8"), (0.35, "F4ECFF"), (0.7, "A8E0FF"), (1, "E0C8FF")]), "patterns": [("nebula", "FFD0EA", 2.5, 0.5), ("nebula", "B8F0FF", 4, 0.4), ("stars", "FFFFFF", 9, 0.7)]},
+			"ShellPink": {"gradient": (-0.1, 0.5, [(0, "F08AA0"), (1, "FFD6E0")])},
+			"Sea": {"patterns": [("bands", "1E6AA8", 10, 0.5)]},
+		},
+	}
+
+
+#// Atlantis 04 Shark Tooth Sword (Uncommon)
+
+def build_shark_tooth_sword(part):
+	blade_base = 0.2
+	length = 2.35
+	serration = [(t, side, 0.07, -0.035, 0.6) for t in (0.18, 0.28, 0.38, 0.48, 0.58, 0.68, 0.78) for side in (-1, 1)]
+	outline, plateau = profile_shape(
+		[(0, blade_base), (0.04, blade_base + length * 0.6), (0.12, blade_base + length)],
+		[(0, 0.36), (0.1, 0.38), (0.6, 0.22), (1, 0)],
+		chamfer=0.12,
+		features=serration,
+	)
+	bm = bmesh.new()
+	add_plate(bm, outline, plateau, 0.02, 0.12)
+	part(bm, "SharkTooth")
+
+	bm = bmesh.new()
+	for side in (-1, 1):
+		fin = [Vector((side * 0.12, -0.02)), Vector((side * 0.6, 0.02)), Vector((side * 0.52, 0.16)), Vector((side * 0.22, 0.2))]
+		add_plate(bm, fin if side > 0 else fin[::-1], None, 0.045)
+	add_box(bm, (0.36, 0.2, 0.22), (0, 0, 0.08), 0.06)
+	bottom = -0.04 - 0.74
+	tail = [Vector((0, 0)), Vector((0.2, -0.22)), Vector((0.08, -0.16)), Vector((0, -0.12)), Vector((-0.08, -0.16)), Vector((-0.2, -0.22))]
+	add_plate(bm, tail, None, 0.04, matrix=Matrix.Translation((0, 0, bottom + 0.02)))
+	part(bm, "SharkSkin")
+
+	bm = bmesh.new()
+	add_grip(bm, -0.04, 0.74, 0.062, 0.074, 7)
+	part(bm, "Rope")
+
+	return {
+		"blade": "SharkTooth",
+		"effects": {
+			"SharkTooth": {"gradient": (0.2, 2.6, [(0, "C9B89A"), (0.25, "F4F0E6"), (1, "FFFFFF")]), "patterns": [("nebula", "E8E0D0", 3, 0.4)]},
+			"SharkSkin": {"gradient": (-0.8, 0.3, [(0, "4A6A8A"), (1, "8AAAC8")])},
+		},
+	}
+
+
+#// Atlantis 05 Angler Blade (Rare)
+
+def build_angler_blade(part):
+	blade_base = 0.42
+	spine = [(0, blade_base), (0.02, blade_base + 1.4), (0.1, blade_base + 2.3), (0.24, blade_base + 2.75)]
+	stations = [(0, 0.2), (0.1, 0.25), (0.6, 0.24), (0.85, 0.17), (1, 0)]
+	teeth = [(t, 1, 0.1, -0.08, 0.7) for t in (0.3, 0.42, 0.54, 0.66)]
+	outline, plateau = profile_shape(spine, stations, chamfer=0.1, features=teeth)
+	bm = bmesh.new()
+	add_plate(bm, outline, plateau)
+	part(bm, "Abyss")
+
+	head = Vector((0, 0, 0.2))
+	bm = bmesh.new()
+	add_ball(bm, head + Vector((0, 0, 0.04)), 0.3, (1.25, 0.85, 0.95))
+	for side in (-1, 1):
+		fin = [Vector((side * 0.3, 0.1)), Vector((side * 0.62, 0.28)), Vector((side * 0.56, 0.08)), Vector((side * 0.62, -0.08)), Vector((side * 0.32, 0.0))]
+		add_plate(bm, fin if side > 0 else fin[::-1], None, 0.025)
+	antenna = [(-0.05, -0.05, 0.42), (-0.2, -0.12, 0.85), (-0.42, -0.2, 1.05), (-0.58, -0.22, 0.95)]
+	add_sweep(bm, antenna, [0.025, 0.02, 0.016, 0.012], sides=5)
+	add_grip(bm, -0.1, 0.74, 0.062, 0.074, 7)
+	add_pommel(bm, [(0.05, -0.85), (0.09, -0.88), (0.09, -0.93), (0.05, -0.97)])
+	part(bm, "AbyssBody")
+
+	bm = bmesh.new()
+	for side in (-1, 1):
+		for index in range(5):
+			x = side * (0.05 + index * 0.065)
+			add_spike(bm, (x, -0.22, 0.12), (side * 0.15, -0.3, 1), 0.12 - index * 0.012, 0.022, sides=4)
+			add_spike(bm, (x, -0.22, -0.02), (side * 0.15, -0.3, -1), 0.1 - index * 0.01, 0.02, sides=4)
+	part(bm, "Tooth")
+
+	bm = bmesh.new()
+	add_ball(bm, (-0.6, -0.22, 0.88), 0.09)
+	for side in (-1, 1):
+		add_ball(bm, head + Vector((side * 0.16, -0.22, 0.14)), 0.045)
+	for x, z in ((-0.1, blade_base + 0.6), (0.08, blade_base + 1.2), (-0.06, blade_base + 1.8)):
+		for y in (-0.095, 0.095):
+			add_ball(bm, (x, y, z), 0.035, (1, 0.4, 1))
+	part(bm, "LureGlow")
+
+	return {
+		"blade": "Abyss",
+		"outline": outline,
+		"edge_glow": ("4FFFE0", 0.05),
+		"effects": {
+			"Abyss": {"gradient": (0.4, 3.2, [(0, "0A1024"), (1, "26406A")]), "patterns": [("stars", "6AFFE0", 9, 0.9), ("nebula", "1E5A6A", 2.5, 0.4)]},
+			"AbyssBody": {"patterns": [("stars", "4FE0C8", 8, 0.6)]},
+		},
+	}
+
+
+#// Atlantis 06 Jellyfish Sword (Rare)
+
+def build_jellyfish_sword(part):
+	blade_base = 0.42
+	length = 2.6
+	outline, plateau = profile_shape(
+		[(0, blade_base), (0, blade_base + length)],
+		[(0, 0.17), (0.1, 0.23), (0.5, 0.26), (0.8, 0.2), (0.93, 0.12), (1, 0)],
+		chamfer=0.11,
+	)
+	bm = bmesh.new()
+	add_plate(bm, outline, plateau)
+	part(bm, "Jelly")
+
+	bell_profile = [(0.42, 0.06), (0.44, 0.14), (0.38, 0.3), (0.26, 0.42), (0.12, 0.48), (0, 0.5)]
+	bm = bmesh.new()
+	add_lathe(bm, bell_profile, 16, Matrix.Diagonal((1, 0.75, 1, 1)))
+	add_grip(bm, -0.04, 0.74, 0.062, 0.074, 7)
+	part(bm, "JellyBell")
+
+	bm = bmesh.new()
+	for index in range(8):
+		angle = math.tau * index / 8 + 0.2
+		root = Vector((math.cos(angle) * 0.36, math.sin(angle) * 0.26, 0.08))
+		length = 0.75 + 0.25 * (index % 3) / 2
+		points = [root]
+		for step in range(1, 6):
+			t = step / 5
+			sway = math.sin(t * math.pi * 2 + index) * 0.07
+			points.append(root * (1 - 0.35 * t) + Vector((sway, sway * 0.5, -length * t)))
+		add_sweep(bm, points, [0.03, 0.026, 0.022, 0.018, 0.012, 0.0], sides=5, smoothness=3)
+	for x, z in ((-0.08, blade_base + 0.5), (0.1, blade_base + 0.95), (-0.06, blade_base + 1.5), (0.07, blade_base + 2.0)):
+		for y in (-0.105, 0.105):
+			add_ball(bm, (x, y, z), 0.04, (1, 0.4, 1))
+	part(bm, "JellyGlow")
+
+	bottom = -0.04 - 0.74
+	bm = bmesh.new()
+	add_lathe(bm, [(0.16, bottom - 0.02), (0.15, bottom - 0.08), (0.1, bottom - 0.16), (0, bottom - 0.2)], 12)
+	add_ball(bm, (0, 0, 0.5), 0.06)
+	part(bm, "Pearl")
+
+	return {
+		"blade": "Jelly",
+		"outline": outline,
+		"edge_glow": ("FF8AE0", 0.07),
+		"effects": {
+			"Jelly": {"gradient": (0.4, 3.0, [(0, "8A5AE0"), (0.6, "D89AFF"), (1, "FFD6F6")]), "patterns": [("nebula", "FFFFFF", 2.5, 0.35), ("stars", "FFE0FA", 9, 0.7)]},
+			"JellyBell": {"gradient": (-0.8, 0.5, [(0, "8A4AC8"), (1, "E0A8FF")]), "patterns": [("stars", "FFE0FA", 7, 0.6)]},
+		},
+	}
+
+
+#// Atlantis 07 Poseidon Trident (Epic)
+
+def build_poseidon_trident(part):
+	blade_base = 0.34
+	length = 2.9
+	outline, plateau = profile_shape(
+		[(0, blade_base), (0, blade_base + length)],
+		[(0, 0.16), (0.08, 0.21), (0.62, 0.18), (0.72, 0.14), (0.9, 0.1), (1, 0)],
+		chamfer=0.09,
+	)
+	bm = bmesh.new()
+	add_plate(bm, outline, plateau)
+	part(bm, "Sea")
+
+	bm = bmesh.new()
+	for side in (-1, 1):
+		prong_spine = [(side * 0.12, blade_base + 1.6), (side * 0.36, blade_base + 1.95), (side * 0.38, blade_base + 2.45), (side * 0.32, blade_base + 2.75)]
+		prong, prong_plateau = profile_shape(prong_spine, [(0, 0.08), (0.2, 0.09), (0.7, 0.07), (1, 0)], chamfer=0.05)
+		add_plate(bm, prong, prong_plateau, 0.015, 0.07)
+		add_spike(bm, (side * 0.4, 0, blade_base + 2.2), (side * 1, 0, -0.6), 0.16, 0.05, sides=4)
+	trim, trim_plateau = profile_shape([(0, blade_base), (0, blade_base + length)], [(0, 0.2), (0.08, 0.25), (0.62, 0.22), (0.72, 0.18), (0.9, 0.13), (1, 0)], chamfer=0.03, plateau_ratio=0.5)
+	add_plate(bm, trim, trim_plateau, 0.008, 0.016)
+	for side in (-1, 1):
+		add_wave_curl(bm, side, (0.12, 0.08), 0.3)
+	add_box(bm, (0.34, 0.24, 0.28), (0, 0, 0.12), 0.06)
+	bottom = -0.04 - 0.78
+	add_pommel(bm, [(0.06, -0.06), (0.09, -0.04), (0.09, 0.0), (0.06, 0.02)])
+	add_pommel(bm, [(0.05, bottom + 0.02), (0.1, bottom - 0.02), (0.1, bottom - 0.06), (0.06, bottom - 0.1)])
+	add_spike(bm, (0, 0, bottom - 0.1), (0, 0, -1), 0.22, 0.06)
+	part(bm, "Gold")
+
+	bm = bmesh.new()
+	add_cabochon(bm, (0, 0, 0.13), 0.09, 0.16)
+	part(bm, "AtlantisGlow", CRYSTAL_SMOOTH_ANGLE)
+
+	bm = bmesh.new()
+	add_grip(bm, -0.04, 0.78, 0.062, 0.074, 7)
+	part(bm, "OceanKing")
+
+	waves = []
+	for index in range(5):
+		z = blade_base + 0.3 + index * 0.32
+		waves.append([(-0.08, z), (-0.04, z + 0.04), (0.0, z), (0.04, z + 0.04), (0.08, z)])
+	return {
+		"blade": "Sea",
+		"decals": waves,
+		"decal_width": 0.018,
+		"decal_colors": ("E8FAFF", "FFFFFF"),
+		"effects": {"Sea": {"gradient": (0.3, 3.3, [(0, "0E4A9A"), (0.6, "3AA8E0"), (1, "A8F0FF")]), "patterns": [("nebula", "8AE8FF", 3, 0.35)]}},
+	}
+
+
+#// Atlantis 08 Octopus Blade (Epic)
+
+def build_octopus_blade(part):
+	blade_base = 0.44
+	spine = [(0, blade_base), (0, blade_base + 2.0), (-0.06, blade_base + 2.85)]
+	stations = [(0, 0.2), (0.08, 0.26), (0.65, 0.24), (0.88, 0.16), (1, 0)]
+	outline, plateau = profile_shape(spine, stations, chamfer=0.1, features=[(0.35, 1, 0.14, 0.06, 0), (0.55, -1, 0.14, 0.06, 0)])
+	bm = bmesh.new()
+	add_plate(bm, outline, plateau)
+	part(bm, "AbyssPurple")
+
+	head = Vector((0, 0, 0.28))
+	bm = bmesh.new()
+	suckers = bmesh.new()
+	add_ball(bm, head + Vector((0, 0.02, 0.06)), 0.27, (1.1, 0.95, 1.15))
+	for phase in (0.3, 0.3 + math.pi):
+		add_tentacle(bm, suckers, spiral_path(0.26, 0.13, 0.45, blade_base + 1.6, 1.1, 9, phase), 0.06)
+	for side in (-1, 1):
+		curl = [(side * 0.2, -0.05, 0.12), (side * 0.48, -0.06, 0.05), (side * 0.66, -0.04, 0.2), (side * 0.6, -0.02, 0.38), (side * 0.48, 0.0, 0.32)]
+		add_tentacle(bm, suckers, curl, 0.065)
+		droop = [(side * 0.12, -0.05, 0.05), (side * 0.3, -0.06, -0.2), (side * 0.26, -0.04, -0.45), (side * 0.36, -0.02, -0.6)]
+		add_tentacle(bm, suckers, droop, 0.05)
+	add_grip(bm, -0.06, 0.78, 0.062, 0.074, 7)
+	part(bm, "Octopus")
+	part(suckers, "Sucker")
+
+	bm = bmesh.new()
+	for side in (-1, 1):
+		add_ball(bm, head + Vector((side * 0.13, -0.22, 0.12)), 0.075, (1, 0.6, 1.1))
+	bottom = -0.06 - 0.78
+	add_ball(bm, (0, 0, bottom - 0.1), 0.12)
+	part(bm, "Pearl")
+
+	bm = bmesh.new()
+	for side in (-1, 1):
+		add_ball(bm, head + Vector((side * 0.13, -0.26, 0.11)), 0.04, (1, 0.5, 1.2))
+	part(bm, "Socket")
+
+	return {
+		"blade": "AbyssPurple",
+		"outline": outline,
+		"edge_glow": ("E08AFF", 0.05),
+		"effects": {
+			"AbyssPurple": {"gradient": (0.4, 3.3, [(0, "2A0E3A"), (1, "7A3AA0")]), "patterns": [("cells", "B05AD8", 2.6, 0.35), ("stars", "FFC2F6", 9, 0.7)]},
+			"Octopus": {"gradient": (-0.8, 1.8, [(0, "7A2A70"), (1, "D86AC8")]), "patterns": [("stars", "FFB0E8", 7, 0.6)]},
+		},
+	}
+
+
+#// Atlantis 09 Atlantean Blade (Legendary)
+
+ATLANTIS_GLYPHS = [
+	[(-1, -1), (0, 1), (1, -1), (-1, 0.2), (1, 0.2)],
+	[(-1, 1), (1, 1), (0, 1), (0, -1)],
+	[(-1, -1), (-1, 1), (1, 0), (-1, -1)],
+	[(0, -1), (0, 1), (-1, 0), (1, 0)],
+	[(-1, 0), (0, 1), (1, 0), (0, -1), (-1, 0)],
+]
+
+
+def build_atlantean_blade(part):
+	blade_base = 0.34
+	length = 3.0
+	spine = [(0, blade_base), (0, blade_base + length)]
+	stations = [(0, 0.2), (0.08, 0.27), (0.45, 0.24), (0.7, 0.29), (0.85, 0.2), (1, 0)]
+	outline, plateau = profile_shape(spine, stations, chamfer=0.12)
+	bm = bmesh.new()
+	add_plate(bm, outline, plateau, 0.02, 0.11)
+	part(bm, "Atlantean", CRYSTAL_SMOOTH_ANGLE)
+
+	trim, trim_plateau = profile_shape(spine, [(t, width + 0.05) for t, width in stations], chamfer=0.03, plateau_ratio=0.5)
+	bm = bmesh.new()
+	add_plate(bm, trim, trim_plateau, 0.008, 0.016)
+	add_torus(bm, 0.2, 0.04, 18, 6, Matrix.Translation((0, 0, 0.18)))
+	for side in (-1, 1):
+		for height in (0.0, 0.36):
+			add_box(bm, (0.2, 0.2, 0.06), (side * 0.52, 0, height), 0.02)
+		add_sweep(bm, [(side * 0.18, 0.18), (side * 0.32, 0.22), (side * 0.44, 0.38)], [0.035, 0.03, 0.025], sides=5)
+	bottom = -0.04 - 0.8
+	add_pommel(bm, [(0.06, -0.04), (0.09, -0.02), (0.09, 0.02), (0.06, 0.04)])
+	add_pommel(bm, [(0.06, bottom + 0.02), (0.1, bottom - 0.02), (0.1, bottom - 0.06), (0.06, bottom - 0.08)])
+	part(bm, "Gold")
+
+	bm = bmesh.new()
+	for side in (-1, 1):
+		profile = [(0.075 + (0.012 if step % 2 else 0), 0.03 + step * 0.03) for step in range(10)]
+		add_lathe(bm, [(0.075, 0.03)] + profile + [(0.075, 0.33)], 10, Matrix.Translation((side * 0.52, 0, 0)))
+	add_lathe(bm, [(0, bottom - 0.08), (0.12, bottom - 0.1), (0.14, bottom - 0.18), (0.08, bottom - 0.26), (0, bottom - 0.28)], 10)
+	part(bm, "Marble")
+
+	bm = bmesh.new()
+	add_ball(bm, (0, 0, 0.18), 0.14)
+	add_gem(bm, (0, 0, bottom - 0.18), 0.07, 0.1)
+	part(bm, "AtlantisGlow", CRYSTAL_SMOOTH_ANGLE)
+
+	bm = bmesh.new()
+	add_grip(bm, -0.04, 0.8, 0.062, 0.074, 7)
+	part(bm, "OceanKing")
+
+	centers = [(0, blade_base + 0.45 + index * 0.42) for index in range(6)]
+	return {
+		"blade": "Atlantean",
+		"outline": outline,
+		"edge_glow": ("8AFFF6", 0.08),
+		"decals": glyph_strokes([[ATLANTIS_GLYPHS[index % len(ATLANTIS_GLYPHS)]] for index in range(6)], centers, 0.07),
+		"decal_width": 0.016,
+		"decal_colors": ("E0FFFF", "FFFFFF"),
+		"effects": {
+			"Atlantean": {"gradient": (0.3, 3.4, [(0, "0E8A9A"), (0.5, "4FE0D0"), (1, "C8FFF6")]), "patterns": [("cells", "A8FFF6", 2.5, 0.45), ("stars", "FFFFFF", 9, 0.8)]},
+			"Marble": {"patterns": [("nebula", "C8C4B8", 4, 0.35)]},
+		},
+	}
+
+
+#// Atlantis 10 Leviathan Fang (Legendary)
+
+def build_leviathan_fang(part):
+	blade_base = 0.5
+	spine = [(0, blade_base), (0.04, blade_base + 1.5), (0.18, blade_base + 2.6), (0.36, blade_base + 3.05)]
+	stations = [(0, 0.2, 0.2), (0.1, 0.25, 0.24), (0.7, 0.24, 0.22), (0.88, 0.18, 0.14), (1, 0, 0)]
+	outline, plateau = profile_shape(spine, stations, chamfer=0.1)
+	bm = bmesh.new()
+	add_plate(bm, outline, plateau)
+	part(bm, "Leviathan")
+
+	bm = bmesh.new()
+	path = catmull_rom([Vector(point) for point in spine], 8) + [Vector(spine[-1])]
+	for t in (0.18, 0.36, 0.54, 0.72):
+		center = point_on_path(path, t)
+		root = center + Vector((-0.22, 0))
+		fin = [root + Vector((0.02, -0.1)), root + Vector((-0.3, 0.06)), root + Vector((-0.2, 0.12)), root + Vector((0.02, 0.12))]
+		add_plate(bm, fin, None, 0.02)
+	tail = [Vector((0, 0)), Vector((0.28, -0.2)), Vector((0.14, -0.04)), Vector((0.24, 0.12)), Vector((0, 0.02)), Vector((-0.24, 0.12)), Vector((-0.14, -0.04)), Vector((-0.28, -0.2))]
+	bottom = -0.1 - 0.8
+	add_plate(bm, tail[::-1], None, 0.03, matrix=Matrix.Translation((0, 0, bottom - 0.2)))
+	part(bm, "Fin")
+
+	head = Vector((0, -0.02, 0.26))
+	bm = bmesh.new()
+	add_ball(bm, head, 0.28, (1.15, 0.95, 1.0))
+	add_ball(bm, head + Vector((0, -0.12, -0.1)), 0.2, (1.0, 1.0, 0.6))
+	coil = spiral_path(0.13, 0.13, -0.05, bottom - 0.05, 2.2, 16)
+	add_sweep(bm, coil, [0.065] * 12 + [0.055, 0.045, 0.035, 0.03], sides=6, smoothness=3)
+	add_grip(bm, -0.1, 0.8, 0.055, 0.06, 6)
+	part(bm, "Leviathan")
+
+	bm = bmesh.new()
+	for side in (-1, 1):
+		add_spike(bm, head + Vector((side * 0.2, 0.08, 0.16)), (side * 0.7, 0.4, 0.9), 0.36, 0.06, sides=5)
+		add_spike(bm, head + Vector((side * 0.12, -0.28, -0.04)), (side * 0.1, -0.2, -1), 0.14, 0.03, sides=4)
+		add_spike(bm, head + Vector((side * 0.06, -0.3, -0.04)), (0, -0.2, -1), 0.1, 0.025, sides=4)
+	part(bm, "Tooth")
+
+	bm = bmesh.new()
+	for side in (-1, 1):
+		add_ball(bm, head + Vector((side * 0.17, -0.2, 0.09)), 0.05, (1.2, 0.6, 0.8))
+	part(bm, "AtlantisGlow")
+
+	return {
+		"blade": "Leviathan",
+		"outline": outline,
+		"edge_glow": ("6AFFF0", 0.06),
+		"effects": {
+			"Leviathan": {"gradient": (0.4, 3.6, [(0, "0E3A5A"), (0.6, "2E8AA0"), (1, "8AE8E8")]), "patterns": [("cells", "6AD8E0", 9, 0.45)]},
+			"Fin": {"gradient": (0.0, 3.0, [(0, "2E8AB0"), (1, "B8F4FA")])},
+		},
+	}
+
+
+#// Atlantis 11 Kraken Sword (Mythic)
+
+def build_kraken_sword(part):
+	blade_base = 0.5
+	spine = [(0, blade_base), (0, blade_base + 2.2), (0.08, blade_base + 3.3)]
+	stations = [(0, 0.24), (0.07, 0.32), (0.4, 0.3), (0.62, 0.36), (0.84, 0.26), (1, 0)]
+	teeth = [(t, side, 0.16, -0.12, 0.75) for t, side in ((0.3, 1), (0.36, -1), (0.52, 1), (0.58, -1), (0.74, 1), (0.8, -1))]
+	outline, plateau = profile_shape(spine, stations, chamfer=0.12, features=teeth)
+	bm = bmesh.new()
+	add_plate(bm, outline, plateau, 0.02, 0.11)
+	part(bm, "Kraken")
+
+	bm = bmesh.new()
+	suckers = bmesh.new()
+	add_ball(bm, (0, 0.04, 0.3), 0.32, (1.15, 0.95, 1.1))
+	add_tentacle(bm, suckers, spiral_path(0.34, 0.15, 0.4, blade_base + 2.3, 1.4, 12, 0.6), 0.08)
+	for side in (-1, 1):
+		curl = [(side * 0.25, -0.04, 0.3), (side * 0.6, -0.06, 0.4), (side * 0.85, -0.04, 0.7), (side * 0.8, -0.02, 1.0), (side * 0.62, 0.0, 1.05), (side * 0.6, 0.0, 0.9)]
+		add_tentacle(bm, suckers, curl, 0.08)
+		droop = [(side * 0.2, -0.04, 0.08), (side * 0.48, -0.06, -0.1), (side * 0.5, -0.04, -0.45), (side * 0.36, -0.02, -0.7), (side * 0.42, 0.0, -0.85)]
+		add_tentacle(bm, suckers, droop, 0.065)
+	bottom = -0.08 - 0.85
+	add_grip(bm, -0.08, 0.85, 0.064, 0.077, 8)
+	part(bm, "KrakenSkin")
+	part(suckers, "Sucker")
+
+	bm = bmesh.new()
+	add_ball(bm, (0, -0.2, 0.34), 0.16, (1.3, 0.6, 1.0))
+	add_ball(bm, (0, 0, bottom - 0.12), 0.14)
+	part(bm, "KrakenEye")
+
+	bm = bmesh.new()
+	add_box(bm, (0.05, 0.08, 0.22), (0, -0.28, 0.34), 0.02)
+	part(bm, "Socket")
+
+	runes = []
+	for index in range(6):
+		center = Vector((0, blade_base + 0.5 + index * 0.4))
+		runes.append([center + Vector(point) * 0.07 for point in VOID_RUNES[(index * 3) % len(VOID_RUNES)]])
+	return {
+		"blade": "Kraken",
+		"outline": outline,
+		"edge_glow": ("C26AFF", 0.07),
+		"decals": runes,
+		"decal_width": 0.016,
+		"decal_colors": ("FFD23A", "FFF6C0"),
+		"effects": {
+			"Kraken": {"gradient": (0.5, 3.8, [(0, "12061E"), (0.5, "3A1A5A"), (1, "7A4AB0")]), "patterns": [("nebula", "2A6A8A", 2.2, 0.35), ("cells", "C26AFF", 2.6, 0.35)]},
+			"KrakenSkin": {"gradient": (-0.9, 1.3, [(0, "3A1450"), (1, "8A4AB0")]), "patterns": [("stars", "E0A8FF", 7, 0.5)]},
+		},
+	}
+
+
+#// Atlantis 12 Ocean King Blade (Exclusive)
+
+def build_ocean_king_blade(part):
+	blade_base = 0.6
+	spine = [(0, blade_base), (0, blade_base + 3.9)]
+	stations = [(0, 0.3), (0.06, 0.4), (0.45, 0.38), (0.72, 0.44), (0.88, 0.3), (1, 0)]
+	crests = [(t, side, 0.3, 0.07, 0.6 * side) for t in (0.25, 0.42, 0.59) for side in (-1, 1)]
+	outline, plateau = profile_shape(spine, stations, chamfer=0.13, features=crests)
+	bm = bmesh.new()
+	add_plate(bm, outline, plateau, 0.022, 0.12)
+	part(bm, "OceanKing")
+
+	trim, trim_plateau = profile_shape(spine, [(t, width + 0.07) for t, width in stations], chamfer=0.04, plateau_ratio=0.5)
+	bm = bmesh.new()
+	add_plate(bm, trim, trim_plateau, 0.008, 0.016)
+	for side in (-1, 1):
+		add_wave_curl(bm, side, (0.2, 0.22), 0.42)
+		add_wave_curl(bm, side, (0.16, 0.02), 0.28, -0.02)
+	crown_base = 0.5
+	add_lathe(bm, [(0.2, crown_base), (0.22, crown_base), (0.23, crown_base + 0.08), (0.21, crown_base + 0.08)], 16, closed=True)
+	for index in range(5):
+		angle = math.tau * index / 5 - math.pi / 2
+		direction = Vector((math.cos(angle) * 0.2, math.sin(angle) * 0.2, 1))
+		root = Vector((math.cos(angle) * 0.22, math.sin(angle) * 0.22, crown_base + 0.06))
+		add_spike(bm, root, direction, 0.22, 0.05, sides=4)
+	fan = []
+	for step in range(17):
+		angle = math.pi * step / 16
+		radius = 0.62 + (0.045 if step % 2 else 0)
+		fan.append(Vector((math.cos(angle) * radius, 0.1 + math.sin(angle) * radius * 0.78)))
+	fan += [Vector((-0.12, 0.0)), Vector((0.12, 0.0))]
+	add_plate(bm, fan, [Vector((point.x * 0.62, 0.1 + (point.y - 0.1) * 0.62)) for point in fan], 0.035, 0.1)
+	for step in range(1, 16, 2):
+		angle = math.pi * step / 16
+		tip = Vector((math.cos(angle) * 0.6, 0.1 + math.sin(angle) * 0.6 * 0.78))
+		for y in (-0.11, 0.11):
+			add_sweep(bm, [(0, y, 0.06), (tip.x * 0.55, y, tip.y * 0.55), (tip.x * 0.97, y, tip.y * 0.97)], [0.022, 0.025, 0.018], sides=5)
+	bottom = -0.08 - 0.95
+	for height in (-0.08, -0.52, bottom + 0.02):
+		add_pommel(bm, [(0.06, height - 0.03), (0.095, height - 0.015), (0.095, height + 0.015), (0.06, height + 0.03)])
+	conch = []
+	for step in range(9):
+		t = step / 8
+		conch.append((0.15 * (1 - t) + 0.015 + (0.02 if step % 2 else 0), bottom - 0.05 - 0.38 * t))
+	conch.append((0, bottom - 0.46))
+	add_lathe(bm, conch, 10)
+	part(bm, "Gold")
+
+	bm = bmesh.new()
+	add_ball(bm, (0, 0, 0.26), 0.2, (1, 1.15, 1))
+	for x, z in ((-0.14, blade_base + 0.9), (0.12, blade_base + 1.6), (-0.1, blade_base + 2.4), (0.11, blade_base + 3.1)):
+		for y in (-0.115, 0.115):
+			add_ball(bm, (x, y, z), 0.045, (1, 0.4, 1))
+	part(bm, "PearlGlow")
+
+	bm = bmesh.new()
+	for index in range(5):
+		angle = math.tau * index / 5 - math.pi / 2 + math.pi / 5
+		add_cabochon(bm, (math.cos(angle) * 0.22, math.sin(angle) * 0.22, crown_base + 0.04), 0.03, 0.02, direction=(math.cos(angle), math.sin(angle), 0))
+	part(bm, "Sapphire", CRYSTAL_SMOOTH_ANGLE)
+
+	bm = bmesh.new()
+	add_grip(bm, -0.08, 0.95, 0.07, 0.084, 8)
+	part(bm, "Sea")
+
+	waves = []
+	for index in range(7):
+		z = blade_base + 0.4 + index * 0.45
+		waves.append([(-0.16, z), (-0.1, z + 0.06), (-0.04, z), (0.02, z + 0.06), (0.08, z), (0.14, z + 0.06)])
+	return {
+		"blade": "OceanKing",
+		"outline": outline,
+		"edge_glow": ("8AF0FF", 0.08),
+		"decals": waves,
+		"decal_width": 0.02,
+		"decal_colors": ("B8F4FF", "FFFFFF"),
+		"effects": {
+			"OceanKing": {"gradient": (0.6, 4.5, [(0, "0A1E5A"), (0.45, "1E5AC8"), (1, "6AD8FF")]), "patterns": [("nebula", "4FB8FF", 2, 0.4), ("stars", "FFFFFF", 10, 0.8)]},
+			"Sea": {"patterns": [("bands", "0E3A8A", 10, 0.5)]},
+		},
+	}
+
+
+ATLANTIS_SWORDS = [
+	("KelpBlade", "Common", build_kelp_blade),
+	("CoralSword", "Common", build_coral_sword),
+	("ShellSword", "Uncommon", build_shell_sword),
+	("SharkToothSword", "Uncommon", build_shark_tooth_sword),
+	("AnglerBlade", "Rare", build_angler_blade),
+	("JellyfishSword", "Rare", build_jellyfish_sword),
+	("PoseidonTrident", "Epic", build_poseidon_trident),
+	("OctopusBlade", "Epic", build_octopus_blade),
+	("AtlanteanBlade", "Legendary", build_atlantean_blade),
+	("LeviathanFang", "Legendary", build_leviathan_fang),
+	("KrakenSword", "Mythic", build_kraken_sword),
+	("OceanKingBlade", "Exclusive", build_ocean_king_blade),
+]
+
+
+#// Magma World
+
+def lava_cracks(start, end, width, count, seed):
+	# Zigzag cracks running up the blade, painted as glowing decals.
+	generator = numpy.random.default_rng(seed)
+	cracks = []
+	for index in range(count):
+		z = start + (end - start) * (index + 0.5) / count
+		x = generator.uniform(-width, width) * 0.5
+		crack = [(x, z - 0.12)]
+		for _ in range(3):
+			x = max(-width, min(width, x + generator.uniform(-0.07, 0.07)))
+			crack.append((x, crack[-1][1] + 0.09))
+		cracks.append(crack)
+		cracks.append([crack[1], (crack[1][0] + generator.choice((-1, 1)) * 0.08, crack[1][1] + 0.05)])
+	return cracks
+
+
+def add_rock_chunk(bm, center, size, seed):
+	# Lumpy low poly rock, an icosphere with every vertex pushed in or out a bit.
+	generator = numpy.random.default_rng(seed)
+	before = set(bm.verts)
+	add_ball(bm, (0, 0, 0), 1)
+	for vert in new_verts_since(bm, before):
+		vert.co = Vector((vert.co.x * size[0], vert.co.y * size[1], vert.co.z * size[2])) * generator.uniform(0.82, 1.12) + Vector(center)
+
+
+#// Magma 01 Basalt Sword (Common)
+
+def build_basalt_sword(part):
+	blade_base = 0.16
+	length = 2.2
+	outline, plateau = profile_shape(
+		[(0, blade_base), (0, blade_base + length)],
+		[(0, 0.24), (0.08, 0.28), (0.85, 0.27), (1, 0.2)],
+		tip=[(1, 0.0), (0.4, 0.14), (-0.5, 0.1), (-1, 0.0)],
+		chamfer=0.1,
+		features=[(0.3, 1, 0.12, 0.06, 0.2), (0.62, -1, 0.14, 0.07, -0.2), (0.82, 1, 0.1, 0.05, 0)],
+	)
+	bm = bmesh.new()
+	add_plate(bm, outline, plateau, 0.04, 0.13)
+	part(bm, "Basalt")
+
+	bm = bmesh.new()
+	for x, seed in ((-0.36, 1), (0.36, 2), (0.0, 3)):
+		add_rock_chunk(bm, (x, 0, 0.06), (0.17 if x else 0.2, 0.15, 0.13), seed)
+	bottom = -0.06 - 0.72
+	add_rock_chunk(bm, (0, 0, bottom - 0.1), (0.15, 0.14, 0.14), 4)
+	part(bm, "BasaltDark")
+
+	bm = bmesh.new()
+	add_grip(bm, -0.06, 0.72, 0.062, 0.074, 7)
+	part(bm, "DarkLeather")
+
+	return {
+		"blade": "Basalt",
+		"effects": {
+			"Basalt": {"gradient": (0.1, 2.5, [(0, "3E3E48"), (1, "7A7A88")]), "patterns": [("cells", "2A2A34", 6, 0.6)]},
+			"BasaltDark": {"patterns": [("cells", "22222A", 8, 0.5)]},
+		},
+	}
+
+
+#// Magma 02 Ember Blade (Common)
+
+def build_ember_blade(part):
+	blade_base = 0.2
+	length = 2.4
+	outline, plateau = profile_shape(
+		[(0, blade_base), (0, blade_base + length)],
+		[(0, 0.17), (0.08, 0.21), (0.75, 0.19), (0.9, 0.13), (1, 0)],
+		chamfer=0.09,
+	)
+	bm = bmesh.new()
+	add_plate(bm, outline, plateau)
+	part(bm, "Ember")
+
+	bm = bmesh.new()
+	arm = [(0.1, 0.1), (0.3, 0.08), (0.4, 0.14)]
+	add_sweep(bm, arm, [0.06, 0.055, 0.045])
+	add_sweep(bm, mirror(arm), [0.06, 0.055, 0.045])
+	add_box(bm, (0.3, 0.2, 0.22), (0, 0, 0.1), 0.05)
+	bottom = -0.04 - 0.74
+	add_pommel(bm, [(0.05, bottom + 0.02), (0.09, bottom - 0.02), (0.09, bottom - 0.08), (0.05, bottom - 0.12)])
+	part(bm, "IronBlack")
+
+	bm = bmesh.new()
+	add_cabochon(bm, (0, 0, 0.1), 0.06, 0.13)
+	add_gem(bm, (0, 0, bottom - 0.16), 0.06, 0.08)
+	part(bm, "EmberGlow", CRYSTAL_SMOOTH_ANGLE)
+
+	bm = bmesh.new()
+	add_grip(bm, -0.04, 0.74, 0.062, 0.074, 7)
+	part(bm, "DarkLeather")
+
+	return {
+		"blade": "Ember",
+		"outline": outline,
+		"edge_glow": ("FF7A2E", 0.06),
+		"effects": {"Ember": {"gradient": (0.2, 2.7, [(0, "2A1E1E"), (1, "5A4444")]), "patterns": [("stars", "FFA040", 9, 0.9)]}},
+	}
+
+
+#// Magma 03 Obsidian Shard (Uncommon)
+
+def build_obsidian_shard(part):
+	blade_base = 0.24
+	length = 2.5
+	jagged = [(t, side, 0.12, -0.07 * (1 + (index % 2)), 0.7) for index, (t, side) in enumerate(((0.2, 1), (0.32, -1), (0.45, 1), (0.58, -1), (0.7, 1), (0.8, -1)))]
+	outline, plateau = profile_shape(
+		[(0, blade_base), (0, blade_base + length)],
+		[(0, 0.18), (0.1, 0.25), (0.5, 0.22), (0.85, 0.15), (1, 0)],
+		chamfer=0.14,
+		plateau_ratio=0.15,
+		features=jagged,
+	)
+	bm = bmesh.new()
+	add_plate(bm, outline, plateau, 0.015, 0.12)
+	part(bm, "Obsidian", CRYSTAL_SMOOTH_ANGLE)
+
+	bm = bmesh.new()
+	for side in (-1, 1):
+		for angle, length_scale in ((15, 0.38), (45, 0.28), (-20, 0.22)):
+			direction = (side * math.cos(math.radians(angle)), 0, math.sin(math.radians(angle)))
+			add_crystal(bm, (side * 0.12, 0, 0.1), direction, length_scale, 0.07)
+	bottom = -0.04 - 0.74
+	add_crystal(bm, (0, 0, bottom - 0.02), (0, 0, -1), 0.3, 0.08)
+	part(bm, "Obsidian", CRYSTAL_SMOOTH_ANGLE)
+
+	bm = bmesh.new()
+	add_box(bm, (0.3, 0.2, 0.18), (0, 0, 0.08), 0.05)
+	add_pommel(bm, [(0.06, bottom + 0.04), (0.09, bottom + 0.02), (0.09, bottom - 0.02), (0.06, bottom - 0.04)])
+	part(bm, "BasaltDark")
+
+	bm = bmesh.new()
+	add_grip(bm, -0.04, 0.74, 0.062, 0.074, 7)
+	part(bm, "DarkLeather")
+
+	return {
+		"blade": "Obsidian",
+		"outline": outline,
+		"edge_glow": ("B07AFF", 0.04),
+		"effects": {"Obsidian": {"gradient": (-0.8, 2.8, [(0, "120A1E"), (0.6, "2E2244"), (1, "5A4A80")]), "patterns": [("nebula", "6A4AA0", 3, 0.45), ("stars", "E0D0FF", 8, 0.6)]}},
+	}
+
+
+#// Magma 04 Lava Cleaver (Uncommon)
+
+def build_lava_cleaver(part):
+	blade_base = 0.22
+	spine = [(0.08, blade_base), (0.08, blade_base + 2.2)]
+	outline, plateau = profile_shape(
+		spine,
+		[(0, 0.16, 0.2), (0.12, 0.24, 0.34), (0.9, 0.24, 0.38), (1, 0.24, 0.38)],
+		tip=[(1, 0.0), (0.6, 0.1), (-1, 0.1)],
+		chamfer=0.1,
+		features=[(0.45, -1, 0.14, 0.07, 0), (0.7, 1, 0.16, 0.06, 0.4)],
+	)
+	bm = bmesh.new()
+	add_plate(bm, outline, plateau, 0.03, 0.12)
+	add_lathe(bm, [(0.07, -0.05), (0.07, 0.05)], 10, oriented((-0.04, 0, blade_base + 1.9), (0, 1, 0)))
+	part(bm, "VolcanoRock")
+
+	bm = bmesh.new()
+	add_box(bm, (0.5, 0.22, 0.2), (0.06, 0, 0.1), 0.06)
+	bottom = -0.04 - 0.76
+	add_pommel(bm, [(0.05, bottom + 0.02), (0.1, bottom - 0.02), (0.1, bottom - 0.08), (0.05, bottom - 0.1)])
+	part(bm, "IronBlack")
+
+	bm = bmesh.new()
+	add_grip(bm, -0.04, 0.76, 0.062, 0.074, 7)
+	part(bm, "DarkLeather")
+
+	return {
+		"blade": "VolcanoRock",
+		"outline": outline,
+		"edge_glow": ("FF6A1E", 0.06),
+		"decals": lava_cracks(blade_base + 0.3, blade_base + 2.0, 0.22, 6, 11),
+		"decal_width": 0.025,
+		"decal_colors": ("FF6A1E", "FFD27A"),
+		"effects": {"VolcanoRock": {"gradient": (0.2, 2.5, [(0, "241818"), (1, "4A3A34")]), "patterns": [("cells", "FF5A1E", 3, 0.25)]}},
+	}
+
+
+#// Magma 05 Salamander Sword (Rare)
+
+def build_salamander_sword(part):
+	blade_base = 0.3
+	spine = [(0, blade_base), (0.02, blade_base + 1.5), (0.14, blade_base + 2.5), (0.3, blade_base + 2.8)]
+	outline, plateau = profile_shape(spine, [(0, 0.18), (0.08, 0.23), (0.7, 0.22), (0.9, 0.15), (1, 0)], chamfer=0.09)
+	bm = bmesh.new()
+	add_plate(bm, outline, plateau)
+	part(bm, "Ember")
+
+	body = [(-0.55, -0.02, 0.18), (-0.3, -0.06, 0.12), (0.0, -0.08, 0.14), (0.3, -0.06, 0.12), (0.5, -0.02, 0.16)]
+	bm = bmesh.new()
+	add_sweep(bm, body, [0.08, 0.1, 0.11, 0.1, 0.07], sides=8)
+	add_ball(bm, (0.58, -0.02, 0.18), 0.12, (1.25, 1, 0.85))
+	tail = spiral_path(0.12, 0.12, 0.05, -0.75, 1.6, 12, math.pi)
+	add_sweep(bm, [(-0.55, -0.02, 0.18), (-0.5, 0.0, 0.05), (-0.25, 0.08, -0.02)] + tail[1:], [0.08, 0.07, 0.06] + [0.05] * 6 + [0.04, 0.03, 0.02, 0.012, 0.0], sides=6, smoothness=3)
+	for x in (-0.32, 0.32):
+		for y in (-0.12, 0.12):
+			add_sweep(bm, [(x, -0.06, 0.1), (x + 0.04, y * 1.2 - 0.06, 0.0), (x + 0.08, y * 1.3 - 0.06, -0.06)], [0.035, 0.03, 0.025], sides=5)
+	part(bm, "Salamander")
+
+	bm = bmesh.new()
+	for x in (-0.4, -0.15, 0.1, 0.32):
+		add_ball(bm, (x, -0.13, 0.2), 0.04, (1, 0.5, 1))
+	part(bm, "SalamanderSpot")
+
+	bm = bmesh.new()
+	for side in (-1, 1):
+		add_ball(bm, (0.66, side * 0.09 - 0.02, 0.24), 0.035)
+	part(bm, "EmberGlow")
+
+	bm = bmesh.new()
+	add_grip(bm, -0.02, 0.74, 0.056, 0.066, 7)
+	add_pommel(bm, [(0.05, -0.78), (0.09, -0.81), (0.09, -0.86), (0.05, -0.9)])
+	part(bm, "DarkLeather")
+
+	return {
+		"blade": "Ember",
+		"outline": outline,
+		"edge_glow": ("FF8A3A", 0.05),
+		"effects": {
+			"Ember": {"gradient": (0.3, 3.1, [(0, "5A1E10"), (0.6, "C0401E"), (1, "FF9A4A")]), "patterns": [("flames", "FFB347", 4, 0.35)]},
+			"Salamander": {"gradient": (-0.8, 0.3, [(0, "C0300E"), (1, "FF7A3A")]), "patterns": [("cells", "8A1A0E", 9, 0.4)]},
+		},
+	}
+
+
+#// Magma 06 Volcano Sword (Rare)
+
+def build_volcano_sword(part):
+	blade_base = 0.5
+	length = 2.6
+	outline, plateau = profile_shape(
+		[(0, blade_base), (0, blade_base + length)],
+		[(0, 0.18), (0.08, 0.23), (0.7, 0.22), (0.88, 0.15), (1, 0)],
+		chamfer=0.1,
+	)
+	bm = bmesh.new()
+	add_plate(bm, outline, plateau)
+	part(bm, "VolcanoRock")
+
+	bm = bmesh.new()
+	cone = [(0.48, -0.02), (0.44, 0.06), (0.3, 0.32), (0.2, 0.52), (0.22, 0.56), (0.14, 0.5)]
+	add_lathe(bm, cone, 12, Matrix.Diagonal((1, 0.72, 1, 1)))
+	add_lathe(bm, [(0.13, 0.5), (0.13, 0.42), (0, 0.42)], 12, Matrix.Diagonal((1, 0.72, 1, 1)))
+	bottom = -0.04 - 0.74
+	add_rock_chunk(bm, (0, 0, bottom - 0.1), (0.15, 0.13, 0.13), 7)
+	part(bm, "VolcanoDark")
+
+	bm = bmesh.new()
+	for side in (-1, 1):
+		add_flame(bm, Vector((side * 0.1, 0.5)), (side * 0.3, 1), 0.6, 0.11, side)
+		add_flame(bm, Vector((side * 0.16, 0.45)), (side * 0.9, 1), 0.4, 0.08, side)
+	for angle in (0.6, 2.2, 3.8, 5.1):
+		flow = [(math.cos(angle) * 0.2, math.sin(angle) * 0.15, 0.52), (math.cos(angle) * 0.3, math.sin(angle) * 0.22, 0.3), (math.cos(angle) * 0.42, math.sin(angle) * 0.3, 0.06)]
+		add_sweep(bm, flow, [0.04, 0.045, 0.035], sides=5)
+	part(bm, "LavaGlow")
+
+	bm = bmesh.new()
+	add_grip(bm, -0.04, 0.74, 0.062, 0.074, 7)
+	part(bm, "DarkLeather")
+
+	river = [[(0, blade_base + 0.1), (0.04, blade_base + 0.6), (-0.03, blade_base + 1.1), (0.03, blade_base + 1.6), (0, blade_base + 2.0)]]
+	return {
+		"blade": "VolcanoRock",
+		"outline": outline,
+		"edge_glow": ("FF5A1E", 0.05),
+		"decals": river + lava_cracks(blade_base + 0.3, blade_base + 2.1, 0.18, 5, 21),
+		"decal_width": 0.028,
+		"decal_colors": ("FF6A1E", "FFD27A"),
+		"effects": {
+			"VolcanoRock": {"gradient": (0.5, 3.1, [(0, "3A1E14"), (1, "5A4A44")]), "patterns": [("cells", "2A1E1A", 4, 0.4)]},
+			"VolcanoDark": {"gradient": (-0.1, 0.6, [(0, "2A1E1A"), (1, "5A3A2E")]), "patterns": [("cells", "FF6A1E", 4, 0.3)]},
+		},
+	}
+
+
+#// Magma 07 Magma Golem Blade (Epic)
+
+def build_magma_golem_blade(part):
+	blade_base = 0.42
+	length = 2.9
+	outline, plateau = profile_shape(
+		[(0, blade_base), (0, blade_base + length)],
+		[(0, 0.2), (0.08, 0.26), (0.75, 0.25), (0.9, 0.17), (1, 0)],
+		chamfer=0.05,
+		plateau_ratio=0.8,
+	)
+	bm = bmesh.new()
+	add_plate(bm, outline, plateau, 0.02, 0.05)
+	part(bm, "LavaGlow")
+
+	bm = bmesh.new()
+	for index in range(7):
+		z = blade_base + 0.2 + index * 0.37
+		width = 0.3 if index < 5 else 0.24 - (index - 5) * 0.06
+		add_rock_chunk(bm, (0, 0, z), (width, 0.12, 0.19), 30 + index)
+	add_spike(bm, (0, 0, blade_base + 2.55), (0, 0, 1), 0.38, 0.12, sides=5)
+	for side in (-1, 1):
+		add_rock_chunk(bm, (side * 0.42, 0, 0.18), (0.2, 0.18, 0.2), 40 + side)
+		for index in range(3):
+			add_rock_chunk(bm, (side * (0.52 + index * 0.02), -0.12, 0.3 - index * 0.11), (0.06, 0.06, 0.05), 50 + index + side * 5)
+	add_rock_chunk(bm, (0, 0, 0.12), (0.26, 0.2, 0.18), 45)
+	bottom = -0.06 - 0.78
+	add_rock_chunk(bm, (0, 0, bottom - 0.12), (0.17, 0.16, 0.16), 46)
+	part(bm, "GolemRock")
+
+	bm = bmesh.new()
+	for side in (-1, 1):
+		add_ball(bm, (side * 0.09, -0.19, 0.16), 0.045, (1, 0.5, 0.8))
+	part(bm, "EmberGlow")
+
+	bm = bmesh.new()
+	add_grip(bm, -0.06, 0.78, 0.064, 0.077, 7)
+	part(bm, "DarkLeather")
+
+	return {
+		"blade": "LavaGlow",
+		"effects": {
+			"LavaGlow": {"gradient": (0.4, 3.3, [(0, "FF5A1E"), (1, "FFD23A")])},
+			"GolemRock": {"gradient": (-1.0, 3.3, [(0, "2A1E1A"), (1, "6A5248")]), "patterns": [("cells", "FF6A1E", 3.5, 0.35)]},
+		},
+	}
+
+
+#// Magma 08 Phoenix Feather (Epic)
+
+def build_phoenix_feather(part):
+	blade_base = 0.34
+	spine = [(0, blade_base), (0.04, blade_base + 1.4), (0.16, blade_base + 2.5), (0.3, blade_base + 2.95)]
+	stations = [(0, 0.16), (0.08, 0.24), (0.5, 0.29), (0.8, 0.22), (0.94, 0.1), (1, 0)]
+	notches = [(t, side, 0.1, 0.07, 0.8 * side) for t, side in ((0.35, 1), (0.48, -1), (0.6, 1), (0.72, -1), (0.82, 1))]
+	outline, plateau = profile_shape(spine, stations, chamfer=0.1, features=notches)
+	bm = bmesh.new()
+	add_plate(bm, outline, plateau, 0.016, 0.08)
+	part(bm, "PhoenixFeather")
+
+	bm = bmesh.new()
+	for side in (-1, 1):
+		root = Vector((side * 0.16, 0.12))
+		for angle, length, width in ((10, 0.62, 0.09), (32, 0.52, 0.085), (55, 0.4, 0.075), (-10, 0.4, 0.07)):
+			direction = Vector((side * math.cos(math.radians(angle)), math.sin(math.radians(angle))))
+			feather_spine = [root, root + direction * length * 0.5 + Vector((0, 0.05)), root + direction * length]
+			feather, feather_plateau = profile_shape(feather_spine, [(0, width * 0.5), (0.35, width), (0.8, width * 0.8), (1, 0)], chamfer=width * 0.4)
+			add_plate(bm, feather, feather_plateau, 0.008, 0.028)
+	part(bm, "PhoenixWing")
+
+	bm = bmesh.new()
+	add_box(bm, (0.3, 0.22, 0.24), (0, 0, 0.12), 0.06)
+	bottom = -0.04 - 0.76
+	add_pommel(bm, [(0.06, -0.04), (0.09, -0.02), (0.09, 0.02), (0.06, 0.04)])
+	add_pommel(bm, [(0.05, bottom + 0.02), (0.09, bottom - 0.02), (0.09, bottom - 0.06), (0.05, bottom - 0.08)])
+	part(bm, "Gold")
+
+	bm = bmesh.new()
+	add_cabochon(bm, (0, 0, 0.12), 0.07, 0.14)
+	add_flame(bm, Vector((0, bottom - 0.08)), (0, -1), 0.32, 0.09)
+	for side in (-1, 1):
+		add_flame(bm, Vector((side * 0.1, 0.32)), (side * 0.4, 1), 0.45, 0.09, side)
+	part(bm, "PhoenixGlow")
+
+	bm = bmesh.new()
+	add_grip(bm, -0.04, 0.76, 0.062, 0.074, 7)
+	part(bm, "RedCloth")
+
+	vane = [[(-0.02, blade_base + 0.1), (0.02, blade_base + 1.4), (0.13, blade_base + 2.45)]]
+	for index in range(8):
+		z = blade_base + 0.35 + index * 0.27
+		x = 0.02 + 0.13 * max(0, (z - blade_base - 1.4) / 1.05)
+		vane.append([(x, z), (x - 0.14, z + 0.12)])
+		vane.append([(x, z), (x + 0.14, z + 0.12)])
+	return {
+		"blade": "PhoenixFeather",
+		"outline": outline,
+		"edge_glow": ("FFE07A", 0.06),
+		"decals": vane,
+		"decal_width": 0.014,
+		"decal_colors": ("A8200E", "FFE07A"),
+		"effects": {
+			"PhoenixFeather": {"gradient": (0.3, 3.3, [(0, "B8200E"), (0.45, "FF6A1E"), (0.8, "FFB03A"), (1, "FFF0A0")])},
+			"PhoenixWing": {"gradient": (0.0, 0.8, [(0, "D8300E"), (1, "FFC23A")])},
+		},
+	}
+
+
+#// Magma 09 Inferno Katana (Legendary)
+
+def build_inferno_katana(part):
+	blade_base = 0.22
+	spine = [(0, blade_base), (0.03, blade_base + 1.5), (0.14, blade_base + 2.7), (0.26, blade_base + 3.2)]
+	outline, plateau = profile_shape(
+		spine,
+		[(0, 0.13, 0.13), (0.1, 0.14, 0.14), (0.85, 0.12, 0.12), (0.95, 0.1, 0.06), (1, 0, 0)],
+		chamfer=0.07,
+	)
+	bm = bmesh.new()
+	add_plate(bm, outline, plateau, 0.014, 0.07)
+	part(bm, "InfernoSteel")
+
+	bm = bmesh.new()
+	tsuba = []
+	for step in range(16):
+		angle = math.tau * step / 16
+		radius = 0.3 if step % 4 else 0.34
+		tsuba.append(Vector((math.cos(angle) * radius, math.sin(angle) * radius * 0.8)))
+	add_plate(bm, tsuba, [point * 0.7 for point in tsuba], 0.035, 0.05, Matrix.Translation((0, 0, 0.12)) @ Matrix.Rotation(math.radians(90), 4, "X"))
+	add_box(bm, (0.16, 0.14, 0.12), (0, 0, 0.2), 0.03)
+	bottom = -0.04 - 1.0
+	add_pommel(bm, [(0.055, bottom + 0.02), (0.075, bottom), (0.075, bottom - 0.05), (0.05, bottom - 0.07)])
+	part(bm, "IronBlack")
+
+	bm = bmesh.new()
+	for side in (-1, 1):
+		add_flame(bm, Vector((side * 0.12, 0.12)), (side * 1, 0.4), 0.3, 0.07, side)
+	part(bm, "EmberGlow")
+
+	bm = bmesh.new()
+	add_grip(bm, -0.04, 1.0, 0.058, 0.07, 9)
+	part(bm, "KatanaWrap")
+
+	bm = bmesh.new()
+	for index in range(9):
+		z = -0.08 - index * 0.111
+		add_box(bm, (0.04, 0.2, 0.04), (0, 0, z), 0.01)
+	part(bm, "Gold")
+
+	hamon = []
+	path = catmull_rom([Vector(point) for point in spine], 8) + [Vector(spine[-1])]
+	previous = None
+	for step in range(26):
+		t = 0.05 + step * 0.034
+		center = point_on_path(path, t)
+		point = (center.x - 0.05 + (0.035 if step % 2 else 0), center.y)
+		if previous:
+			hamon.append([previous, point])
+		previous = point
+	return {
+		"blade": "InfernoSteel",
+		"outline": outline,
+		"edge_glow": ("FF6A1E", 0.06),
+		"decals": hamon,
+		"decal_width": 0.02,
+		"decal_colors": ("FF8A2E", "FFE07A"),
+		"effects": {
+			"InfernoSteel": {"gradient": (0.2, 3.4, [(0, "2A2228"), (1, "6A6070")]), "patterns": [("flames", "FF5A1E", 5, 0.45)]},
+			"KatanaWrap": {"patterns": [("bands", "4A0812", 12, 0.6)]},
+		},
+	}
+
+
+#// Magma 10 Dragonfire Sword (Legendary)
+
+def build_dragonfire_sword(part):
+	blade_base = 0.58
+	length = 2.9
+	spine = [(0, blade_base), (0, blade_base + length)]
+	stations = [(0, 0.2), (0.08, 0.27), (0.6, 0.25), (0.82, 0.3), (0.9, 0.2), (1, 0)]
+	outline, plateau = profile_shape(spine, stations, chamfer=0.1, features=[(0.82, side, 0.14, -0.1, 0.7) for side in (-1, 1)])
+	bm = bmesh.new()
+	add_plate(bm, outline, plateau)
+	part(bm, "DragonSteel")
+
+	head = Vector((0, -0.02, 0.32))
+	bm = bmesh.new()
+	add_ball(bm, head, 0.26, (1.1, 1.0, 1.0))
+	add_box(bm, (0.3, 0.42, 0.18), head + Vector((0, -0.26, -0.06)), 0.07)
+	add_box(bm, (0.26, 0.36, 0.08), head + Vector((0, -0.2, -0.22)), 0.03)
+	for side in (-1, 1):
+		wing, bones = bat_wing_outline(0.42)
+		wing_matrix = Matrix.Translation((side * 0.2, 0.12, 0.24)) @ Matrix.Diagonal((side, 1, 1, 1)) @ Matrix.Rotation(math.radians(-10), 4, "Y")
+		add_plate(bm, wing, None, 0.02, matrix=wing_matrix)
+		for bone in bones:
+			add_sweep(bm, [(point.x, point.y) for point in bone], [0.02] * (len(bone) - 1) + [0.006], sides=4, matrix=wing_matrix)
+	bottom = -0.08 - 0.82
+	add_grip(bm, -0.08, 0.82, 0.064, 0.077, 7)
+	part(bm, "Dragon")
+
+	bm = bmesh.new()
+	for side in (-1, 1):
+		add_sweep(bm, [head + Vector((side * 0.15, 0.1, 0.12)), head + Vector((side * 0.32, 0.22, 0.3)), head + Vector((side * 0.36, 0.38, 0.5))], [0.055, 0.04, 0.0], sides=6)
+		add_spike(bm, head + Vector((side * 0.08, -0.4, -0.12)), (0, -0.3, -1), 0.1, 0.025, sides=4)
+	add_pommel(bm, [(0.06, bottom + 0.02), (0.1, bottom - 0.02), (0.1, bottom - 0.06), (0.06, bottom - 0.08)])
+	add_spike(bm, (0, 0, bottom - 0.07), (0, 0, -1), 0.24, 0.07, sides=5)
+	part(bm, "Bone")
+
+	bm = bmesh.new()
+	for side in (-1, 1):
+		add_ball(bm, head + Vector((side * 0.13, -0.2, 0.1)), 0.04, (1.3, 0.6, 0.8))
+		add_flame(bm, Vector((side * 0.24, 0.62)), (side * 0.25, 1), 0.85, 0.13, side)
+		add_flame(bm, Vector((side * 0.32, 0.5)), (side * 0.8, 1), 0.5, 0.1, -side)
+	part(bm, "DragonFire")
+
+	return {
+		"blade": "DragonSteel",
+		"outline": outline,
+		"edge_glow": ("FF8A2E", 0.06),
+		"effects": {
+			"DragonSteel": {"gradient": (0.5, 3.5, [(0, "A8301E"), (0.3, "3A2228"), (1, "5A4A58")]), "patterns": [("cells", "C0401E", 8, 0.45), ("flames", "FF8A2E", 4, 0.25)]},
+			"Dragon": {"gradient": (-0.9, 0.7, [(0, "5A0E0E"), (1, "C0301E")]), "patterns": [("cells", "3A0808", 10, 0.4)]},
+		},
+	}
+
+
+#// Magma 11 Molten Core Blade (Mythic)
+
+def build_molten_core_blade(part):
+	blade_base = 0.46
+	length = 3.2
+	spine = [(0, blade_base), (0, blade_base + length)]
+	stations = [(0, 0.24), (0.07, 0.32), (0.62, 0.3), (0.84, 0.22), (1, 0)]
+	teeth = [(t, side, 0.14, -0.1, 0.7) for t in (0.3, 0.5, 0.7) for side in (-1, 1)]
+	outline, plateau = profile_shape(spine, stations, chamfer=0.11, features=teeth)
+	core, core_plateau = profile_shape([(0, blade_base + 0.25), (0, blade_base + 2.5)], [(0, 0.04), (0.15, 0.09), (0.85, 0.08), (1, 0)], chamfer=0.03, plateau_ratio=0.5)
+	bm = bmesh.new()
+	add_plate(bm, outline, plateau, 0.02, 0.1)
+	part(bm, "MoltenCore")
+
+	bm = bmesh.new()
+	add_plate(bm, core, core_plateau, 0.11, 0.12)
+	add_ball(bm, (0, 0, 0.2), 0.15)
+	part(bm, "CoreGlow")
+
+	bm = bmesh.new()
+	for side in (-1, 1):
+		add_sweep(bm, [(side * 0.14, 0.12), (side * 0.38, 0.06), (side * 0.56, 0.2), (side * 0.62, 0.42)], [0.07, 0.065, 0.05, 0.0], sides=6)
+		add_spike(bm, (side * 0.3, 0, 0.1), (side * 0.3, 0, -1), 0.3, 0.06, sides=5)
+	add_torus(bm, 0.22, 0.05, 16, 6, Matrix.Translation((0, 0, 0.2)))
+	bottom = -0.08 - 0.88
+	for height in (-0.08, -0.5, bottom + 0.02):
+		add_pommel(bm, [(0.06, height - 0.03), (0.095, height - 0.015), (0.095, height + 0.015), (0.06, height + 0.03)])
+	add_spike(bm, (0, 0, bottom - 0.02), (0, 0, -1), 0.3, 0.08, sides=5)
+	part(bm, "IronBlack")
+
+	bm = bmesh.new()
+	for index in range(-3, 4):
+		if index == 0:
+			continue
+		rotation = Matrix.Rotation(math.radians(90 if index % 2 else 0), 4, "X")
+		add_torus(bm, 0.05, 0.016, 10, 5, Matrix.Translation((index * 0.085, -0.05, -0.05 - abs(index) * 0.03)) @ rotation)
+	part(bm, "Chain")
+
+	bm = bmesh.new()
+	add_grip(bm, -0.08, 0.88, 0.064, 0.077, 8)
+	part(bm, "DarkLeather")
+
+	return {
+		"blade": "MoltenCore",
+		"outline": outline,
+		"edge_glow": ("FF6A1E", 0.07),
+		"decals": lava_cracks(blade_base + 0.3, blade_base + 2.6, 0.26, 6, 31),
+		"decal_width": 0.022,
+		"decal_colors": ("FF6A1E", "FFD27A"),
+		"effects": {
+			"MoltenCore": {"gradient": (0.4, 3.7, [(0, "120A0E"), (1, "3A2A34")]), "patterns": [("cells", "FF5A1E", 2.8, 0.45)]},
+			"CoreGlow": {"gradient": (0.4, 3.0, [(0, "FF4A0E"), (0.5, "FF9A2E"), (1, "FFE07A")])},
+		},
+	}
+
+
+#// Magma 12 Magma Titan Blade (Exclusive)
+
+def build_magma_titan_blade(part):
+	blade_base = 0.66
+	spine = [(0, blade_base), (0, blade_base + 2.4), (0.08, blade_base + 3.6), (0.24, blade_base + 4.1)]
+	stations = [(0, 0.32), (0.06, 0.42), (0.5, 0.44), (0.76, 0.38), (0.9, 0.26), (1, 0)]
+	features = []
+	for side in (-1, 1):
+		features += [(t, side, 0.2, -0.15, 0.75) for t in (0.24, 0.42, 0.6, 0.78)]
+	outline, plateau = profile_shape(spine, stations, chamfer=0.14, features=features)
+	bm = bmesh.new()
+	add_plate(bm, outline, plateau, 0.024, 0.13)
+	part(bm, "MagmaTitan")
+
+	trim, trim_plateau = profile_shape(spine, [(t, width + 0.08) for t, width in stations], chamfer=0.04, plateau_ratio=0.5)
+	bm = bmesh.new()
+	add_plate(bm, trim, trim_plateau, 0.008, 0.018)
+	path = catmull_rom([Vector(point) for point in spine], 8) + [Vector(spine[-1])]
+	for t, side in ((0.15, 1), (0.33, -1), (0.51, 1), (0.69, -1)):
+		center = point_on_path(path, t)
+		add_crystal(bm, (center.x + side * 0.3, 0, center.y), (side * 0.8, 0, 0.6), 0.32, 0.08)
+	add_cabochon(bm, (0, 0, 0.3), 0.15, 0.2, sides=10)
+	for side in (-1, 1):
+		add_flame(bm, Vector((side * 0.3, 0.62)), (side * 0.3, 1), 0.7, 0.13, side)
+		add_flame(bm, Vector((side * 0.42, 0.5)), (side * 0.9, 1), 0.5, 0.1, side)
+	bottom = -0.1 - 1.0
+	add_crystal(bm, (0, 0, bottom - 0.04), (0, 0, -1), 0.36, 0.1)
+	part(bm, "TitanGlow", CRYSTAL_SMOOTH_ANGLE)
+
+	bm = bmesh.new()
+	add_box(bm, (0.7, 0.32, 0.36), (0, 0, 0.3), 0.1)
+	for side in (-1, 1):
+		horn = [(side * 0.3, 0.42), (side * 0.62, 0.52), (side * 0.82, 0.8), (side * 0.8, 1.15)]
+		add_sweep(bm, horn, [0.1, 0.085, 0.06, 0.0], sides=7)
+		add_sweep(bm, [(side * 0.32, 0.2), (side * 0.6, 0.06), (side * 0.72, -0.18)], [0.08, 0.06, 0.0], sides=6)
+	for height in (-0.1, -0.55, bottom + 0.02):
+		add_pommel(bm, [(0.065, height - 0.035), (0.1, height - 0.015), (0.1, height + 0.015), (0.065, height + 0.035)])
+	part(bm, "IronBlack")
+
+	bm = bmesh.new()
+	add_grip(bm, -0.1, 1.0, 0.07, 0.084, 8)
+	part(bm, "DarkLeather")
+
+	return {
+		"blade": "MagmaTitan",
+		"outline": outline,
+		"edge_glow": ("FF6A1E", 0.09),
+		"decals": lava_cracks(blade_base + 0.3, blade_base + 3.4, 0.34, 9, 41),
+		"decal_width": 0.028,
+		"decal_colors": ("FF6A1E", "FFE07A"),
+		"effects": {
+			"MagmaTitan": {
+				"gradient": (0.6, 4.8, [(0, "FF4A0E"), (0.12, "3A141A"), (0.6, "1E1622"), (1, "4A3A58")]),
+				"patterns": [("cells", "FF5A1E", 2.4, 0.55), ("stars", "FFC23A", 9, 0.6)],
+			},
+			"TitanGlow": {"gradient": (-1.2, 4.0, [(0, "FF5A1E"), (1, "FFE07A")])},
+		},
+	}
+
+
+MAGMA_SWORDS = [
+	("BasaltSword", "Common", build_basalt_sword),
+	("EmberBlade", "Common", build_ember_blade),
+	("ObsidianShard", "Uncommon", build_obsidian_shard),
+	("LavaCleaver", "Uncommon", build_lava_cleaver),
+	("SalamanderSword", "Rare", build_salamander_sword),
+	("VolcanoSword", "Rare", build_volcano_sword),
+	("MagmaGolemBlade", "Epic", build_magma_golem_blade),
+	("PhoenixFeather", "Epic", build_phoenix_feather),
+	("InfernoKatana", "Legendary", build_inferno_katana),
+	("DragonfireSword", "Legendary", build_dragonfire_sword),
+	("MoltenCoreBlade", "Mythic", build_molten_core_blade),
+	("MagmaTitanBlade", "Exclusive", build_magma_titan_blade),
+]
+
+
+#// Robux Exclusive Galaxy Dragon Greatsword
+
+def build_galaxy_dragon_greatsword(part):
+	blade_base = 0.8
+	spine = [(0, blade_base), (0, blade_base + 2.8), (0.06, blade_base + 4.2), (0.2, blade_base + 4.7)]
+	stations = [(0, 0.34), (0.05, 0.46), (0.35, 0.42), (0.6, 0.5), (0.8, 0.42), (0.92, 0.28), (1, 0)]
+	features = []
+	for side in (-1, 1):
+		features += [(t, side, 0.28, 0.08, 0) for t in (0.22, 0.47)]
+		features += [(t, side, 0.12, -0.12, 0.8) for t in (0.33, 0.58, 0.72)]
+	outline, plateau = profile_shape(spine, stations, chamfer=0.16, features=features)
+	bm = bmesh.new()
+	add_plate(bm, outline, plateau, 0.026, 0.14)
+	part(bm, "Galaxy")
+
+	trim, trim_plateau = profile_shape(spine, [(t, width + 0.07) for t, width in stations], chamfer=0.04, plateau_ratio=0.5)
+	bm = bmesh.new()
+	add_plate(bm, trim, trim_plateau, 0.008, 0.02)
+	star = star_shape(4, 0.42, 0.13)
+	add_plate(bm, star, [point * 0.45 for point in star], 0.06, 0.17, Matrix.Translation((0, 0, blade_base + 2.6)))
+	for side in (-1, 1):
+		wing, bones = bat_wing_outline(1.05)
+		wing_matrix = Matrix.Translation((side * 0.3, 0.12, 0.42)) @ Matrix.Diagonal((side, 1, 1, 1)) @ Matrix.Rotation(math.radians(-14), 4, "Y")
+		add_plate(bm, wing, None, 0.026, matrix=wing_matrix)
+	path = catmull_rom([Vector(point) for point in spine], 8) + [Vector(spine[-1])]
+	for t, side in ((0.12, 1), (0.12, -1), (0.4, 1), (0.4, -1), (0.66, 1), (0.66, -1)):
+		center = point_on_path(path, t)
+		add_crystal(bm, (center.x + side * 0.42, 0, center.y), (side * 0.85, 0, 0.55), 0.38, 0.085)
+	bottom = 0.06 - 1.05
+	add_crystal(bm, (0, 0, bottom - 0.06), (0, 0, -1), 0.42, 0.11)
+	part(bm, "GalaxyGlow", CRYSTAL_SMOOTH_ANGLE)
+
+	head = Vector((0, -0.06, 0.5))
+	scale = 1.5
+	bm = bmesh.new()
+	for side in (-1, 1):
+		wing, bones = bat_wing_outline(1.05)
+		wing_matrix = Matrix.Translation((side * 0.3, 0.12, 0.42)) @ Matrix.Diagonal((side, 1, 1, 1)) @ Matrix.Rotation(math.radians(-14), 4, "Y")
+		for bone in bones:
+			add_sweep(bm, [(point.x, point.y) for point in bone], [0.034] * (len(bone) - 1) + [0.01], sides=5, smoothness=3, matrix=wing_matrix)
+		add_sweep(bm, [head + Vector((side * 0.14, 0.12, 0.16)) * scale, head + Vector((side * 0.34, 0.24, 0.42)) * scale, head + Vector((side * 0.36, 0.36, 0.72)) * scale, head + Vector((side * 0.28, 0.4, 0.9)) * scale], [0.1, 0.08, 0.05, 0.0], sides=6)
+	add_ball(bm, head + Vector((0, 0.06, 0.04)) * scale, 0.27 * scale, (1.1, 1.0, 0.95))
+	add_box(bm, (0.32 * scale, 0.4 * scale, 0.2 * scale), head + Vector((0, -0.28, -0.06)) * scale, 0.1)
+	add_box(bm, (0.28 * scale, 0.34 * scale, 0.08 * scale), head + Vector((0, -0.22, -0.22)) * scale, 0.04)
+	for height in (0.06, -0.48, bottom + 0.02):
+		add_pommel(bm, [(0.07, height - 0.035), (0.105, height - 0.015), (0.105, height + 0.015), (0.07, height + 0.035)])
+	add_lathe(bm, [(0.14, bottom - 0.04), (0.18, bottom - 0.08), (0.16, bottom - 0.14), (0.1, bottom - 0.14)], 10)
+	part(bm, "Gold")
+
+	bm = bmesh.new()
+	for side in (-1, 1):
+		add_ball(bm, head + Vector((side * 0.13, -0.2, 0.12)) * scale, 0.045 * scale, (1.3, 0.6, 0.8))
+		add_spike(bm, head + Vector((side * 0.09, -0.44, -0.12)) * scale, (0, -0.3, -1), 0.11 * scale, 0.026 * scale, sides=4)
+	part(bm, "StarCore")
+
+	bm = bmesh.new()
+	add_torus(bm, 0.62, 0.035, 32, 6, Matrix.Translation((0, 0, blade_base + 1.2)) @ Matrix.Rotation(math.radians(70), 4, "X") @ Matrix.Rotation(math.radians(-12), 4, "Y"))
+	part(bm, "CosmicGlow")
+
+	bm = bmesh.new()
+	add_grip(bm, 0.06, 1.05, 0.072, 0.086, 9)
+	part(bm, "VoidLeather")
+
+	constellations = [
+		[(-0.18, blade_base + 0.6), (-0.06, blade_base + 0.85), (0.1, blade_base + 0.75), (0.2, blade_base + 1.05)],
+		[(0.16, blade_base + 1.6), (0.02, blade_base + 1.85), (-0.14, blade_base + 1.75), (-0.2, blade_base + 2.05)],
+		[(-0.12, blade_base + 3.1), (0.04, blade_base + 3.3), (0.18, blade_base + 3.2), (0.1, blade_base + 3.55), (-0.02, blade_base + 3.7)],
+	]
+	for constellation in list(constellations):
+		for x, z in constellation:
+			constellations.append([(x - 0.035, z), (x + 0.035, z)])
+			constellations.append([(x, z - 0.035), (x, z + 0.035)])
+	return {
+		"blade": "Galaxy",
+		"outline": outline,
+		"edge_glow": ("FF8AF0", 0.1),
+		"decals": constellations,
+		"decal_width": 0.014,
+		"decal_colors": ("E0F4FF", "FFFFFF"),
+		"effects": {
+			"Galaxy": {
+				"gradient": (0.8, 5.5, [(0, "120838"), (0.4, "3A1E8A"), (0.75, "8A2AB0"), (1, "FF6AE8")]),
+				"patterns": [("nebula", "2AB8FF", 1.6, 0.45), ("nebula", "FF4FD8", 2.6, 0.35), ("stars", "FFFFFF", 12, 1)],
+			},
+			"GalaxyGlow": {"gradient": (-1.3, 4.0, [(0, "8A4AFF"), (0.5, "FF6AE8"), (1, "FFE0FA")]), "patterns": [("stars", "FFFFFF", 9, 0.8)]},
+		},
+	}
+
+
+ROBUX_SWORDS = [
+	("GalaxyDragonGreatsword", "Exclusive", build_galaxy_dragon_greatsword),
+]
+
+
 WORLDS = {
 	"Starter": SWORDS,
 	"Desert": DESERT_SWORDS,
 	"Halloween": HALLOWEEN_SWORDS,
+	"Atlantis": ATLANTIS_SWORDS,
+	"Magma": MAGMA_SWORDS,
+	"Robux": ROBUX_SWORDS,
 }
 
 
