@@ -1,0 +1,41 @@
+{
+  "name": "mixe-launcher",
+  "productName": "Mixe Launcher",
+  "version": "0.1.0",
+  "description": "Minecraft launcher with Microsoft login, Fabric, Modrinth mods, optimisation presets and .mrpack modpacks",
+  "main": "out/main/index.js",
+  "author": "MixeYT",
+  "license": "MIT",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run",
+    "dist": "electron-vite build && electron-builder --win --x64"
+  },
+  "dependencies": {
+    "adm-zip": "0.6.1"
+  },
+  "devDependencies": {
+    "@types/adm-zip": "0.5.8",
+    "@types/node": "22.20.5",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.3",
+    "@vitejs/plugin-react": "5.2.0",
+    "electron": "44.5.1",
+    "electron-builder": "26.15.3",
+    "electron-vite": "5.0.0",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "typescript": "5.9.3",
+    "vite": "7.3.6",
+    "vitest": "3.2.7"
+  },
+  "build": {
+    "appId": "com.mixeyt.launcher",
+    "productName": "Mixe Launcher",
+    "directories": { "output": "release" },
+    "files": ["out/**/*"],
+    "win": { "target": "nsis" }
+  }
+}
